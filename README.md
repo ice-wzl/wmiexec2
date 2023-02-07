@@ -1,6 +1,11 @@
 # wmiexec2.0
 ## Overview
-- `wmiexec2.0` is the same `wmiexec` that everyone knows and loves (debatable).  This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  This script is under active development and is currently at a minimal viable product stage.  If you find and issue or want a specific module throw me a PR. Enjoy 
+- `wmiexec2.0` is the same `wmiexec` that everyone knows and loves (debatable).  
+- This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  
+- It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  
+- This script is under active development and is currently at a minimal viable product stage.  
+- If you find and issue or want a specific module throw me a PR. 
+- Enjoy 
 ## Installation
 - Install `impacket` like you normally would and then download this script.  The installation of `impacket` will resolve any and all dependencies.  If you do not know how to install `impacket` check out this link (or their repo).
 - https://ice-wzl.gitbook.io/oscp-prep/domain-controllers/impacket-install 
