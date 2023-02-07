@@ -491,7 +491,7 @@ class RemoteShell(cmd.Cmd):
             self.__pwd = self.__outputBuffer.strip('\r\n')
             self.prompt = (self.__pwd + '>')
             if self.__shell_type == 'powershell':
-                self.prompt = 'PS ' + self.prompt + ' '
+                self.prompt = ' ' + 'PS ' + self.prompt + ' '
             self.__outputBuffer = ''
 
     def default(self, line):
