@@ -14,6 +14,14 @@
 ## Help 
 - To view the help and available modules:
 - ![mods](https://user-images.githubusercontent.com/75596877/217378727-77c423c0-312a-47ef-90dd-cf4b3acf2804.png)
+## Connection
+- You can still connect to the remote machine the exact same way.
+- Recommend you use `-shell-type powershell` 
+- Password auth + NT Hash auth still both apply 
+````
+python3 wmiexec2.0.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
+python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-type powershell
+````
 ## Normal wmiexec functionality 
 - `lcd {path}` change directory on your local machine
 - `exit` you should know this one
