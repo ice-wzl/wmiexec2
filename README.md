@@ -7,6 +7,7 @@
 - If you find and issue or want a specific module throw me a PR. 
 - Enjoy 
 ## Installation
+- **Do not** `wget` this file with `GitHubs Raw` feature, it will break the Ghost emoji. Git clone the repo and it will all work.
 - Install `impacket` like you normally would and then download this script.  The installation of `impacket` will resolve any and all dependencies.  If you do not know how to install `impacket` check out this link (or their repo).
 - https://ice-wzl.gitbook.io/oscp-prep/domain-controllers/impacket-install 
 - https://github.com/fortra/impacket
