@@ -50,8 +50,10 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - See picture for usage options
 - ![tuns](https://user-images.githubusercontent.com/75596877/217380037-21698459-fe6d-42d5-90f2-41463681a525.png)
 ## Loggrab
-- This module isnt working right now, if someone knows how to fix it please let me know with a PR.
-- Under active development
+- Download log file of your choice
+- Will download any file in `C:\windows\system32\winevt\logs`
+- Use: `loggrab Security.evtx`
+- ![Screenshot_2023-02-11_15-06-36](https://user-images.githubusercontent.com/75596877/218279040-9aef1999-8db9-4095-888d-e8f80477b8cb.png)
 ## Survey
 - Also under active development
 - Right now run this module and it will run a basic host survey and save it off to your local machine in a file called `survey.txt` as to not flood you with `stdout`
