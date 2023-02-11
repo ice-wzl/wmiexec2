@@ -208,7 +208,6 @@ class RemoteShell(cmd.Cmd):
             file_path = 'C:\Windows\System32\Winevt\Logs\\'
             remote_copy = ' C:\Windows\system32\spool\drivers\color'
             combined_command = prefix + file_path + s + remote_copy
-            print(combined_command)
             self.execute_remote(combined_command)
             logging.info(s)
             self.do_lget(remote_copy.lstrip() + '\\' + s)
