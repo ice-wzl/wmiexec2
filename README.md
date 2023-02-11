@@ -55,6 +55,7 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - Use: `loggrab Security.evtx`
 - ![Screenshot_2023-02-11_15-06-36](https://user-images.githubusercontent.com/75596877/218279040-9aef1999-8db9-4095-888d-e8f80477b8cb.png)
 ## Survey
-- Also under active development
-- Right now run this module and it will run a basic host survey and save it off to your local machine in a file called `survey.txt` as to not flood you with `stdout`
+- under active development
+- It will run a basic host survey and save it off to your local machine in a file called `survey.txt` as to not flood you with `stdout`
+- `wmic` output is weird so view `survey.txt` with `cat survey.txt | more`
 - ![survey](https://user-images.githubusercontent.com/75596877/217380259-d394762c-892a-4b02-8caa-510a5583e8eb.png)
