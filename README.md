@@ -4,7 +4,7 @@
 - This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  
 - It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  
 - This script is under active development and is currently at a minimal viable product stage.  
-- If you find and issue or want a specific module throw me a PR. 
+- If you find an issue or want a specific module throw me a PR. 
 - Enjoy 
 ## Installation
 - **Do not** `wget` this file with `GitHubs Raw` feature, it will break the Ghost emoji. Git clone the repo and it will all work.
