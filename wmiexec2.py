@@ -165,60 +165,41 @@ class RemoteShell(cmd.Cmd):
   """)
 
     def do_survey(self, s):
-        #first get all the users 
-        try:
-            logging.info("Starting Survey")
-            f = open("survey.txt", "a")
-            #basic infomation 
-            f.write("[*] Hostname: \n")
-            self.execute_remote("hostname")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            f.write("[*] Username: \n")
-            self.execute_remote("whoami")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            #check tokens 
-            f.write("[*] Tokens, user permission: \n")
-            self.execute_remote("whoami /all")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            #ip
-            f.write("[*] IP Info: \n")
-            self.execute_remote("ipconfig /all")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            #neighbors 
-            f.write("[*] Arp Info: \n")
-            self.execute_remote("arp -a")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            #default route 
-            f.write("[*] Default Route: \n")
-            self.execute_remote("route print")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            f.write("[*] DNS Cache: \n")
-            self.execute_remote("ipconfig /displaydns")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = '' 
-            f.write("[*] Tasklist: \n")
-            self.execute_remote("tasklist /svc")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = ''
-            f.write("[*] Process List with Command Line: \n")
-            self.execute_remote("wmic process get name,parentprocessid,processid,commandline /format:list")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = ''
-            f.write("[*] Connections: \n")
-            self.execute_remote("netstat -naob")
-            f.write(self.__outputBuffer.strip('\r\n') + '\n')
-            self.__outputBuffer = ''
-            logging.info("Survey Finished")
-            logging.info("To view file: cat survey.txt | more")
-        except:
-            pass 
- 
+        save_local_option = s.split(" ")[0]
+        if save_local_option == "save":
+            try:
+                logging.info("Saving all output from survey to survey.txt in your local pwd")
+                logging.info("Starting Survey")
+                local_save_file = open("survey.txt", "a")
+
+                config_file = open("survey.conf", "r+")
+                current_line = config_file.readline()
+
+                for item in config_file:
+                    local_save_file.write("[*] %s \n" % (item))
+                    self.execute_remote(item.strip('\n'))
+                    time.sleep(1)
+                    local_save_file.write(self.__outputBuffer.strip('\r\n') + '\n')
+                    self.__outputBuffer = ''
+                logging.info("Survey Completed")
+            except:
+                logging.info("Something went wrong, try again")
+        else:
+            try:
+                logging.info("Starting Survey")
+                config_file = open("survey.conf", "r+")
+                current_line = config_file.readline()
+
+                for item in config_file:
+                    print("[*] %s" % (item))
+                    self.execute_remote(item.strip('\n'))
+                    time.sleep(1)
+                    if len(self.__outputBuffer.strip('\r\n')) > 0:
+                        print(self.__outputBuffer)
+                        self.__outputBuffer = ''
+                logging.info("Survey Completed")
+            except:
+                logging.info("Something went wrong, try again")
 
     def do_loggrab(self, s):
         try:
