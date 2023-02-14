@@ -3,7 +3,7 @@
 - `wmiexec2.0` is the same `wmiexec` that everyone knows and loves (debatable).  
 - This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  
 - It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  
-- This script is under active development and is currently at a minimal viable product stage.  
+- This script is under active development and will improve with time.  
 - If you find an issue or want a specific module throw me a PR. 
 - Enjoy 
 ## Installation
@@ -14,10 +14,11 @@
 ## Modules 
 ## Help 
 - To view the help and available modules:
-- ![mods](https://user-images.githubusercontent.com/75596877/217378727-77c423c0-312a-47ef-90dd-cf4b3acf2804.png)
+- ![help](https://user-images.githubusercontent.com/75596877/218882014-21aaf686-d5e0-4f91-90b4-eb7504174605.png)
 ## Connection
 - You can still connect to the remote machine the exact same way.
-- Recommend you use `-shell-type powershell` 
+- Recommend you use `-shell-type powershell` until I have had further time to test all the modules on both `cmd` and `powershell`
+- In the meantime if you are worried about `powershell` logging just downgrade to `powershell 2.0`
 - Password auth + NT Hash auth still both apply 
 ````
 python3 wmiexec2.0.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
@@ -35,27 +36,34 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - `ls` || `ls C:\Users` - allows you to view your current target directory. Its executing the `dir /a` command so you will see hidden files by default without any other special options
 ## Sysinfo
 - To see basic target information use this module
-- ![sysinfo](https://user-images.githubusercontent.com/75596877/217378824-d1c3035c-ded6-44bf-88dc-66185ad46a62.png)
+- ![sysinfo1](https://user-images.githubusercontent.com/75596877/218882046-dd75ae2b-0ea8-4fe4-b87b-678825b77c15.png)
 ## Psp
 - View some well known security products running on the target system.
-- ![psp](https://user-images.githubusercontent.com/75596877/217379644-57029cef-0651-4017-ae31-6c0f48e33597.png)
+- ![psp1](https://user-images.githubusercontent.com/75596877/218882111-b599b867-381b-44b1-b717-780d3c3ed35a.png)
 ## unattend
 - There are 11 files (that I know of) part of the `unattend` group in Windows that have the potential to have base64 encoded credentials in them. Find them all in one command
-- ![unattend](https://user-images.githubusercontent.com/75596877/217379773-ef4ce892-d961-4aa4-9bda-5ebe40b171a0.png)
+- ![unattend1](https://user-images.githubusercontent.com/75596877/218882205-26e6e22a-0b29-4cc1-9009-1fb05b9b7dbf.png)
 ## Regrip
 - Save off the `SAM`, `Security` and `System` hives to your local machines.  Defender blocks this by default, so I had to find a bypass working as of 2/7/23.  Try to not get this signatured, thanks in advance.
-- ![regrip](https://user-images.githubusercontent.com/75596877/217379936-deee6179-238b-4a80-b342-e29e1a4e865b.png)
+- ![regrip1](https://user-images.githubusercontent.com/75596877/218882349-8c7ea3bf-5c14-4e6f-b5e9-7178b573e5a8.png)
 ## Tunneling
 - Leverage Windows built in `netsh` tunneling without having to type the whole thing out 
 - See picture for usage options
-- ![tuns](https://user-images.githubusercontent.com/75596877/217380037-21698459-fe6d-42d5-90f2-41463681a525.png)
+- ![tuns1](https://user-images.githubusercontent.com/75596877/218882531-aefcacce-de38-418d-9c8e-e9f21a6e6a7a.png)
 ## Loggrab
 - Download log file of your choice
 - Will download any file in `C:\windows\system32\winevt\logs`
 - Use: `loggrab Security.evtx`
-- ![Screenshot_2023-02-11_15-06-36](https://user-images.githubusercontent.com/75596877/218279040-9aef1999-8db9-4095-888d-e8f80477b8cb.png)
+- ![image](https://user-images.githubusercontent.com/75596877/218882689-6ea2c4f3-d037-45f7-9a99-b267ab310281.png)
 ## Survey
 - under active development
-- It will run a basic host survey and save it off to your local machine in a file called `survey.txt` as to not flood you with `stdout`
-- `wmic` output is weird so view `survey.txt` with `cat survey.txt | more`
-- ![survey](https://user-images.githubusercontent.com/75596877/217380259-d394762c-892a-4b02-8caa-510a5583e8eb.png)
+- Input your own custom commands into `survey.conf` file seperated by a new line, or use the basic one that I have provided
+- There are two options with this module:
+- run module with `survey` which will print out the command you ran plus the output of that command
+- Or run with `survey save`this will return none of the commands to stdout, but will save all commands run and their output into `survey.txt` located in your local pwd.
+### survey save 
+- ![image](https://user-images.githubusercontent.com/75596877/218883217-16dbf400-fb87-44bf-86a7-93e5f677070c.png)
+- ![image](https://user-images.githubusercontent.com/75596877/218883247-7fed82d4-8b5d-402b-9db0-85abf74a5e07.png)
+### survey
+- ![image](https://user-images.githubusercontent.com/75596877/218883378-4b26c8df-4e6e-45e8-a29f-b34bcaeea448.png)
+
