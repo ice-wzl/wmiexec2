@@ -207,11 +207,14 @@ class RemoteShell(cmd.Cmd):
             log_file_name = s 
             file_path = 'C:\Windows\System32\Winevt\Logs\\'
             remote_copy = ' C:\Windows\system32\spool\drivers\color'
-            combined_command = prefix + file_path + s + remote_copy
+            combined_command = prefix + '"' + file_path + s + '"' + remote_copy
             self.execute_remote(combined_command)
             logging.info(s)
             self.do_lget(remote_copy.lstrip() + '\\' + s)
             self.execute_remote("del" + remote_copy + '\\' + s)
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                print(self.__outputBuffer)
+                self.__outputBuffer = ''
         except:
             pass 
 
