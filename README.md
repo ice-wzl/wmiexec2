@@ -11,7 +11,14 @@
 - Install `impacket` like you normally would and then download this script.  The installation of `impacket` will resolve any and all dependencies.  If you do not know how to install `impacket` check out this link (or their repo).
 - https://ice-wzl.gitbook.io/oscp-prep/domain-controllers/impacket-install 
 - https://github.com/fortra/impacket
-## Modules 
+## Modules
+- Tested on:
+````
+#Windows Server 2022 Updated Febuary Defender Sigs
+All modules working, no module flags
+#Windows 7 Pro Antispyware Definitions: v1.95.191.0 11/18/2010
+Reg module not working, no module flags
+````
 ## Help 
 - To view the help and available modules:
 - ![help](https://user-images.githubusercontent.com/75596877/218882014-21aaf686-d5e0-4f91-90b4-eb7504174605.png)
