@@ -556,7 +556,7 @@ class RemoteShell(cmd.Cmd):
         command = self.__shell + data
 
         if self.__noOutput is False:
-            command += ' 1> ' + '\\\\127.0.0.1\\%s' % self.__share + self.__output + ' 2>&1'
+            command += ' 1> ' + '\\\\localhost\\%s' % self.__share + self.__output + ' 2>&1'
         if PY2:
             self.__win32Process.Create(command.decode(sys.stdin.encoding), self.__pwd, None)
         else:
