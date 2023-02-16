@@ -16,11 +16,13 @@
 ````
 #Windows Server 2022 Updated Febuary Defender Sigs
 All modules working, no module flags
-#Windows 10 Pro Virus + Spyware Definition Version: 1.381.3595.0 2/14/2023
+#Windows 10 Pro Defender Virus + Spyware Definition Version: 1.381.3595.0 2/14/2023
 All modules working, no module flags
-#Windows 8 Virus and Spyware Definition Version: 1.383.35.0 2/15/2023
+#Windows 10 Pro Kaspersky Standard App Version 21.8.5.452, Definitions 2/15/23
 All modules working, no module flags
-#Windows 7 Pro Antispyware Definitions: v1.95.191.0 11/18/2010
+#Windows 8 Defender Virus and Spyware Definition Version: 1.383.35.0 2/15/2023
+All modules working, no module flags
+#Windows 7 Pro Defender Antispyware Definitions: v1.95.191.0 11/18/2010
 Reg module not working, no module flags
 ````
 ## Help 
