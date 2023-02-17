@@ -53,6 +53,14 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 ## Psp
 - View some well known security products running on the target system.
 - ![psp1](https://user-images.githubusercontent.com/75596877/218882111-b599b867-381b-44b1-b717-780d3c3ed35a.png)
+## VMcheck
+- Attempts to detect if you are in a virtual machine (So far works for ESXi/VMWare Workstation and QEMU) 
+- Performs three checks 
+- Looks for `C:\Program Files\VMWare`
+- Looks for common running executables in a proccess list
+- Pulls the `System Manufactuer` from host
+- ![image](https://user-images.githubusercontent.com/75596877/219784824-89f497bf-1426-4f03-8729-ef90b0178515.png)
+
 ## unattend
 - There are 11 files (that I know of) part of the `unattend` group in Windows that have the potential to have base64 encoded credentials in them. Find them all in one command
 - ![unattend1](https://user-images.githubusercontent.com/75596877/218882205-26e6e22a-0b29-4cc1-9009-1fb05b9b7dbf.png)
