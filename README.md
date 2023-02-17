@@ -27,7 +27,7 @@ Reg module not working, no module flags
 ````
 ## Help 
 - To view the help and available modules:
-- ![help](https://user-images.githubusercontent.com/75596877/218882014-21aaf686-d5e0-4f91-90b4-eb7504174605.png)
+- ![image](https://user-images.githubusercontent.com/75596877/219784438-cdd4a0f1-9e04-4c22-b0ec-6788b4499b40.png)
 ## Connection
 - You can still connect to the remote machine the exact same way.
 - Recommend you use `-shell-type powershell` until I have had further time to test all the modules on both `cmd` and `powershell`
