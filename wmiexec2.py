@@ -165,6 +165,10 @@ class RemoteShell(cmd.Cmd):
  --------------------------------------------------------------------------------------------
   loggrab                   - collects log of your choice --> loggrab Security.evtx 
   survey                    - performs host survey of target, saves output to local machine
+ --------------------------------------------------------------------------------------------
+ + Priv Esc                                                                                 +
+ --------------------------------------------------------------------------------------------
+  tokens                    - enumerate enabled tokens for priv esc path
   """)
 
     def do_survey(self, s):
