@@ -11,6 +11,7 @@ import argparse
 import time
 import logging
 import ntpath
+import re
 from base64 import b64encode
 import uuid
 from impacket.examples import logger
@@ -223,7 +224,20 @@ class RemoteShell(cmd.Cmd):
                 print(self.__outputBuffer)
                 self.__outputBuffer = ''
         except:
-            pass 
+            pass
+
+
+    def do_mounts(self, s):
+        try:
+            self.execute_remote("wmic logicaldisk get description,name")
+            find_description_start = "Description"
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                new_buff = self.__outputBuffer.split("codec")[0]
+                print(new_buff)
+                self.__outputBuffer = ''
+
+        except:
+            pass
 
     def do_sysinfo(self, s):
         try:
@@ -246,10 +260,18 @@ class RemoteShell(cmd.Cmd):
             self.execute_remote('ipconfig /all | findstr /i "(Preferred)"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 print(self.__outputBuffer)
-                self.__outputBuffer = '' 
+                self.__outputBuffer = ''
+            logging.info('Last Reboot')
+            if self.__shell_type == 'powershell':
+                self.execute_remote('gci -h C:\pagefile.sys')
+            else:
+                self.execute_remote('dir /a C:\pagefile.sys | findstr /R "4[0-9]"')
+            if len(self.__outputBuffer.strip('\r\n')) > 0:                
+                print(self.__outputBuffer)
+                self.__outputBuffer = ''
         except:
             pass
-     
+
     def do_lcd(self, s):
         if s == '':
             print(os.getcwd())
@@ -467,7 +489,6 @@ class RemoteShell(cmd.Cmd):
         eleven = r"C:\Windows\System32\Sysprep\unattended.xml"
 
         try:
-            #TODO do bash escape code colors here
             logging.info("Looking for: %s, %s" % (one, two))
             self.execute_remote('dir C:\ | findstr /i "unattend.txt || unattend.inf"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
