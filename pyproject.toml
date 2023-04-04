@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wmiexec_2_0"
+version = "0.0.1"
+description = "Your favorite wmiexec but better."
+
+authors = [
+  { name="ice-wzl", email="" },
+  { name='D3FAVLTx90", email="z.young@infosploit.com" }
+]
+
+maintainers = [
+  { name="ice-wzl", email="5596877+ice-wzl@users.noreply.github.com" },
+  { name='D3FAVLTx90", email="z.young@infosploit.com" }
+]
+
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE.txt"}
+classifiers = [
+
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = ["impacket==0.10.0","termcolor==2.2.0"]
+
+[project.urls]
+"Homepage" = "https://github.com/ice-wzl/wmiexec2.0"
+"Bug Tracker" = "https://github.com/ice-wzl/wmiexec2.0/issues"
