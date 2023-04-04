@@ -23,7 +23,6 @@ from base64 import b64encode
 from termcolor import colored, cprint
 from six import PY2
 
-# impacket ver == 0.10.0
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
 from impacket import version
