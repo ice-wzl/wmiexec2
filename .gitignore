@@ -4,3 +4,4 @@ include
 lib
 lib64
 share
+*.pyc
