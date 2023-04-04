@@ -73,78 +73,7 @@ def load_smbclient_auth_file(path):
     return (domain, username, password)
 
 
-def main(options):
-    
-    # Init the example's logger theme
-    logger.init(options.ts)
-
-    if options.codec is not None:
-        CODEC = options.codec
-    else:
-        if CODEC is None:
-            CODEC = 'utf-8'
-
-    if ' '.join(options.command) == ' ' and options.nooutput is True:
-        logging.error("-nooutput switch and interactive shell not supported")
-        sys.exit(1)
-    if options.silentcommand and options.command == ' ':
-        logging.error("-silentcommand switch and interactive shell not supported")
-        sys.exit(1)
-
-    if options.debug is True:
-        logging.getLogger().setLevel(logging.DEBUG)
-        # Print the Library's installation path
-        logging.debug(version.getInstallationPath())
-    else:
-        logging.getLogger().setLevel(logging.INFO)
-
-    if options.com_version is not None:
-        try:
-            major_version, minor_version = options.com_version.split('.')
-            COMVERSION.set_default_version(int(major_version), int(minor_version))
-        except Exception:
-            logging.error("Wrong COMVERSION format, use dot separated integers e.g. \"5.7\"")
-            sys.exit(1)
-
-    domain, username, password, address = parse_target(options.target)
-
-    try:
-        if options.A is not None:
-            (domain, username, password) = load_smbclient_auth_file(options.A)
-            logging.debug('loaded smbclient auth file: domain=%s, username=%s, password=%s' % (
-            repr(domain), repr(username), repr(password)))
-
-        if domain is None:
-            domain = ''
-
-        if options.keytab is not None:
-            Keytab.loadKeysFromKeytab(options.keytab, username, domain, options)
-            options.k = True
-
-        if password == '' and username != '' and options.hashes is None and options.no_pass is False and options.aesKey is None:
-            from getpass import getpass
-
-            password = getpass("Password:")
-
-        if options.aesKey is not None:
-            options.k = True
-
-        executer = wmic(' '.join(options.command), username, password, domain, options.hashes, options.aesKey,
-                           options.share, options.nooutput, options.k, options.dc_ip, options.shell_type)
-        executer.run(address, options.silentcommand)
-    except KeyboardInterrupt as e:
-        logging.error(str(e))
-    except Exception as e:
-        if logging.getLogger().level == logging.DEBUG:
-            import traceback
-
-            traceback.print_exc()
-        logging.error(str(e))
-        sys.exit(1)
-    
-    
-# Process command-line arguments.
-if __name__ == '__main__':
+def cli():
     print(version.BANNER)
 
     parser = argparse.ArgumentParser(add_help=True, 
@@ -218,6 +147,83 @@ if __name__ == '__main__':
 
     options = parser.parse_args()
     
-    main(options)
+    return options
+
+def main():
+    
+    options = cli()
+    
+    # Init the example's logger theme
+    logger.init(options.ts)
+
+    if options.codec is not None:
+        CODEC = options.codec
+    else:
+        if CODEC is None:
+            CODEC = 'utf-8'
+
+    if ' '.join(options.command) == ' ' and options.nooutput is True:
+        logging.error("-nooutput switch and interactive shell not supported")
+        sys.exit(1)
+    if options.silentcommand and options.command == ' ':
+        logging.error("-silentcommand switch and interactive shell not supported")
+        sys.exit(1)
+
+    if options.debug is True:
+        logging.getLogger().setLevel(logging.DEBUG)
+        # Print the Library's installation path
+        logging.debug(version.getInstallationPath())
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    if options.com_version is not None:
+        try:
+            major_version, minor_version = options.com_version.split('.')
+            COMVERSION.set_default_version(int(major_version), int(minor_version))
+        except Exception:
+            logging.error("Wrong COMVERSION format, use dot separated integers e.g. \"5.7\"")
+            sys.exit(1)
+
+    domain, username, password, address = parse_target(options.target)
+
+    try:
+        if options.A is not None:
+            (domain, username, password) = load_smbclient_auth_file(options.A)
+            logging.debug('loaded smbclient auth file: domain=%s, username=%s, password=%s' % (
+            repr(domain), repr(username), repr(password)))
+
+        if domain is None:
+            domain = ''
+
+        if options.keytab is not None:
+            Keytab.loadKeysFromKeytab(options.keytab, username, domain, options)
+            options.k = True
+
+        if password == '' and username != '' and options.hashes is None and options.no_pass is False and options.aesKey is None:
+            from getpass import getpass
+
+            password = getpass("Password:")
+
+        if options.aesKey is not None:
+            options.k = True
+
+        executer = wmic(' '.join(options.command), username, password, domain, options.hashes, options.aesKey,
+                           options.share, options.nooutput, options.k, options.dc_ip, options.shell_type)
+        executer.run(address, options.silentcommand)
+    except KeyboardInterrupt as e:
+        logging.error(str(e))
+    except Exception as e:
+        if logging.getLogger().level == logging.DEBUG:
+            import traceback
+
+            traceback.print_exc()
+        logging.error(str(e))
+        sys.exit(1)
+    
+    
+# Process command-line arguments.
+if __name__ == '__main__':
+    
+    main()
 
     sys.exit(0)

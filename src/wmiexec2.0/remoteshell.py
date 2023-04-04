@@ -387,7 +387,7 @@ class remoteshell(cmd.Cmd):
             if len(self.__outputBuffer.strip('\r\n')) > 0: 
                 print(self.__outputBuffer)
                 self.__outputBuffer = ''
-        except:
+        except Exception as e:
             logging.critical(str(e))
             pass
 
