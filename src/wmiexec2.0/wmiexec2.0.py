@@ -11,12 +11,15 @@ from __future__ import print_function
 import argparse
 import logging
 import sys
+import traceback
 
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
 from impacket import version
 from impacket.dcerpc.v5.dcomrt import COMVERSION
 from impacket.krb5.keytab import Keytab
+
+from getpass import getpass
 
 # library within package
 from wmic import wmic
@@ -143,11 +146,12 @@ def cli():
 
     if len(sys.argv) == 1:
         parser.print_help()
-        sys.exit(1)
+        sys.exit(0)
 
     options = parser.parse_args()
     
     return options
+
 
 def main():
     
@@ -155,33 +159,37 @@ def main():
     
     # Init the example's logger theme
     logger.init(options.ts)
+    logging.getLogger().setLevel(logging.INFO)
 
+    # set CODEC
     if options.codec is not None:
         CODEC = options.codec
     else:
+        # Why ?
         if CODEC is None:
             CODEC = 'utf-8'
 
-    if ' '.join(options.command) == ' ' and options.nooutput is True:
-        logging.error("-nooutput switch and interactive shell not supported")
-        sys.exit(1)
+    if options.nooutput and options.command == ' ':
+        logging.error("-nooutput switch and interactive shell combination not supported")
+        # This should print help menu
+        sys.exit(10)
+        
     if options.silentcommand and options.command == ' ':
-        logging.error("-silentcommand switch and interactive shell not supported")
-        sys.exit(1)
-
-    if options.debug is True:
-        logging.getLogger().setLevel(logging.DEBUG)
-        # Print the Library's installation path
-        logging.debug(version.getInstallationPath())
-    else:
-        logging.getLogger().setLevel(logging.INFO)
+        logging.error("-silentcommand switch and interactive shell combination not supported")
+        # This should print help menu
+        sys.exit(11)
 
     if options.com_version is not None:
         try:
             major_version, minor_version = options.com_version.split('.')
             COMVERSION.set_default_version(int(major_version), int(minor_version))
-        except Exception:
+        except ValueError:
             logging.error("Wrong COMVERSION format, use dot separated integers e.g. \"5.7\"")
+            sys.exit(12)
+        except Exception:
+            logging.error("Unexpected error")
+            # Remove before merge. Need exact exception
+            traceback.print_exc(file=sys.stdout)
             sys.exit(1)
 
     domain, username, password, address = parse_target(options.target)
@@ -200,28 +208,27 @@ def main():
             options.k = True
 
         if password == '' and username != '' and options.hashes is None and options.no_pass is False and options.aesKey is None:
-            from getpass import getpass
-
+            
             password = getpass("Password:")
 
         if options.aesKey is not None:
             options.k = True
 
+
         executer = wmic(' '.join(options.command), username, password, domain, options.hashes, options.aesKey,
                            options.share, options.nooutput, options.k, options.dc_ip, options.shell_type)
+        
         executer.run(address, options.silentcommand)
+        
     except KeyboardInterrupt as e:
         logging.error(str(e))
+        
     except Exception as e:
-        if logging.getLogger().level == logging.DEBUG:
-            import traceback
-
-            traceback.print_exc()
         logging.error(str(e))
+        traceback.print_exc()
         sys.exit(1)
     
     
-# Process command-line arguments.
 if __name__ == '__main__':
     
     main()

