@@ -23,6 +23,7 @@ from getpass import getpass
 
 # library within package
 from wmic import wmic
+from remoteshell import remoteshell
 
 CODEC = sys.stdout.encoding
 
