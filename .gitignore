@@ -5,3 +5,4 @@ lib
 lib64
 share
 *.pyc
+wmiexec_2_0.egg-info
