@@ -1,6 +1,6 @@
-# wmiexec2.0
+# wmiexec2
 ## Overview
-- `wmiexec2.0` is the same `wmiexec` that everyone knows and loves (debatable).  
+- `wmiexec2` is the same `wmiexec` that everyone knows and loves (debatable).  
 - This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  
 - It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  
 - This script is under active development and will improve with time.  
@@ -34,8 +34,8 @@ Reg module not working, no module flags
 - In the meantime if you are worried about `powershell` logging just downgrade to `powershell 2.0`
 - Password auth + NT Hash auth still both apply 
 ````
-python3 wmiexec2.0.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
-python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-type powershell
+python3 wmiexec2.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
+python3 wmiexec2.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-type powershell
 ````
 ## Normal wmiexec functionality 
 - `lcd {path}` change directory on your local machine
@@ -44,7 +44,7 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - `lget {file}` download remote file to your local machine
 - `! {cmd}` execute local system command --> `!ls` lists your current directory on your local machine 
 ## My modules
-- Everything else from here and below is additional features added into `wmiexec` to make it `wmiexec2.0`
+- Everything else from here and below is additional features added into `wmiexec` to make it `wmiexec2`
 - `cat` - just to make this more unix friendly simply uses `type` on the remote machine to view a file....just an alias you can use
 - `ls` || `ls C:\Users` - allows you to view your current target directory. Its executing the `dir /a` command so you will see hidden files by default without any other special options
 ## Sysinfo
