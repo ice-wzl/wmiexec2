@@ -9,12 +9,12 @@ description = "Your favorite wmiexec but better."
 
 authors = [
   { name="ice-wzl", email="" },
-  { name='D3FAVLTx90", email="z.young@infosploit.com" }
+  { name="D3FAVLTx90", email="z.young@infosploit.com" }
 ]
 
 maintainers = [
   { name="ice-wzl", email="5596877+ice-wzl@users.noreply.github.com" },
-  { name='D3FAVLTx90", email="z.young@infosploit.com" }
+  { name="D3FAVLTx90", email="z.young@infosploit.com" }
 ]
 
 readme = "README.md"
@@ -28,7 +28,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-dependencies = ["impacket==0.10.0","termcolor==2.2.0"]
+dependencies = ["impacket==0.10.0","termcolor==2.2.0", "six==1.16.0"]
 
 [project.scripts]
 wmiexec2.0 = "wmiexec2.0.wmiexec2.0:cli"
