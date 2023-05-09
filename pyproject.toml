@@ -31,7 +31,7 @@ classifiers = [
 dependencies = ["impacket==0.10.0","termcolor==2.2.0", "six==1.16.0"]
 
 [project.scripts]
-wmiexec2.0 = "wmiexec2.0.wmiexec2.0:cli"
+wmiexec2 = "wmiexec2.0.wmiexec2.0:cli"
 
 [project.urls]
 "Homepage" = "https://github.com/ice-wzl/wmiexec2.0"
