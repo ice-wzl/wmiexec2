@@ -1,0 +1,3 @@
+impacket==0.10.0
+six==1.16.0
+termcolor==2.3.0
