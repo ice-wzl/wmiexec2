@@ -61,7 +61,7 @@ class RemoteShell(cmd.Cmd):
  --------------------------------------------------------------------------------------------
  + Process Accounting                                                                      +
  --------------------------------------------------------------------------------------------
-  psp                        - looks for Anti-Virus solutions running in the process list
+  av                        - looks for Anti-Virus solutions running in the process list
   vmcheck                    - attempts to detect if we are running in a vm
  --------------------------------------------------------------------------------------------
  + Credential Harvesting                                                                    +
@@ -289,7 +289,7 @@ class RemoteShell(cmd.Cmd):
             logging.critical(str(e))
             pass
 
-    def do_psp(self, s):
+    def do_av(self, s):
         try:
             self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe || WinDefend || MSASCui.exe || navapsvc.exe || avkwctl.exe || fsav32.exe || mcshield.exe || ntrtscan.exe || avguard.exe || ashServ.exe || avengine.exe || avgemc.exe || tmntsrv.exe || kavfswp.exe || kavtray.exe || vapm.exe || avpui.exe || avp.exe"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:

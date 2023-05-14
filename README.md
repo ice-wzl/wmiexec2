@@ -52,9 +52,9 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 ## Sysinfo
 - To see basic target information use this module
 - ![sysinfo1](https://user-images.githubusercontent.com/75596877/218882046-dd75ae2b-0ea8-4fe4-b87b-678825b77c15.png)
-## Psp
+## Anti-Virus
 - View some well known security products running on the target system.
-- ![psp1](https://user-images.githubusercontent.com/75596877/218882111-b599b867-381b-44b1-b717-780d3c3ed35a.png)
+- Enumerates the process list to see if they are running.
 ## VMcheck
 - Attempts to detect if you are in a virtual machine (So far works for ESXi/VMWare Workstation and QEMU) 
 - Performs three checks 
