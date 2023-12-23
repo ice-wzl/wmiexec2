@@ -11,7 +11,7 @@ from base64 import b64encode
 import uuid
 from six import PY2
 
-OUTPUT_FILENAME = f"{{{uuid.uuid4()}}}".lower()
+OUTPUT_FILENAME = f"{{{uuid.uuid4()}}}".upper()
 CODEC = sys.stdout.encoding
 
 class RemoteShell(cmd.Cmd):
@@ -28,7 +28,7 @@ class RemoteShell(cmd.Cmd):
         self.__silentCommand = silentCommand
         self.__pwd = str('C:\\')
         self.__noOutput = False
-        self.intro = '[!] **Obsfucated wmiexec** Launching semi-interactive shell\n[!] Press help for extra shell commands'
+        self.intro = '[!] **Launching wmiexec2**\n[!] Press help for extra shell commands'
 
         # We don't wanna deal with timeouts from now on.
         if self.__transferClient is not None:
