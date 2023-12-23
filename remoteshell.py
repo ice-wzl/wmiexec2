@@ -303,14 +303,14 @@ class RemoteShell(cmd.Cmd):
         #see if user specified a dir or not
         if len(s) == 0:
             try:
-                self.execute_remote('dir -h .')
+                self.execute_remote('dir /A /N /O:D .')
                 self.format_print_buff()
             except Exception as e:
                 print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
         else:
             path = s.split(" ")[0]
             try:
-                self.execute_remote('dir -h %s' % path)
+                self.execute_remote('dir /A /N /O:D %s' % path)
                 self.format_print_buff()
             except Exception as e:
                 print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
@@ -357,7 +357,6 @@ class RemoteShell(cmd.Cmd):
         if len(self.__outputBuffer.strip('\r\n')) > 0: 
             if "SeImpersonatePrivilege" in self.__outputBuffer:
                 print('SeImpersonate Enabled: \n   juicy-potato\n   RougeWinRM\n   SweetPotato\n   PrintSpoofer')
-        #dont clear the ouput buffer until you are done with your checks 
             if "SeBackupPrivilege" in self.__outputBuffer:
                 print('SeBackupPrivilege Enabled: \n   https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1\n   https://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug\n   https://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec')
             if "SeTakeOwnershipPrivilege" in self.__outputBuffer:
