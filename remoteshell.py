@@ -34,11 +34,28 @@ OUTPUT_FILENAME = random_sig()
 
 CODEC = sys.stdout.encoding
 
+def temp_perm():
+    """
+    Function will create a permutation on the Temp directory altering it case
+
+    Return: a random case on Temp
+    """
+    letters = ['t', 'e', 'm', 'p']
+    final_arr = []
+    for i in letters:
+        rand_num = random.randint(1,2)
+        if rand_num == 1:
+            final_arr.append(i.upper())
+        else:
+            final_arr.append(i.lower())
+    return ''.join(final_arr)
+
 class RemoteShell(cmd.Cmd):
     def __init__(self, share, win32Process, smbConnection, shell_type, silentCommand=False):
         cmd.Cmd.__init__(self)
         self.__share = share
-        self.__output = '\\Temp\\' + OUTPUT_FILENAME
+        self.__output = '\\' + temp_perm() + '\\' + OUTPUT_FILENAME
+        print(f"[*] Output Filename: {self.__output}")
         self.__outputBuffer = str('')
         self.__shell = 'cmd.exe /Q /c '
         self.__shell_type = shell_type
