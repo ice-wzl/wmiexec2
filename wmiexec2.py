@@ -49,6 +49,7 @@ class WMIEXEC:
             dialect = smbConnection.getDialect()
             if dialect == SMB_DIALECT:
                 logging.info("SMBv1 dialect used")
+                logging.info("[!!] Warning traffic will be unencrypted")
             elif dialect == SMB2_DIALECT_002:
                 logging.info("SMBv2.0 dialect used")
             elif dialect == SMB2_DIALECT_21:

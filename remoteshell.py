@@ -66,7 +66,7 @@ class RemoteShell(cmd.Cmd):
         self.__silentCommand = silentCommand
         self.__pwd = str('C:\\')
         self.__noOutput = False
-        self.intro = '[!] **Launching wmiexec2**\n[!] Press help for extra shell commands'
+        self.intro = '[*] **Launching wmiexec2**\n[*] Press help for extra shell commands'
 
         # We don't wanna deal with timeouts from now on.
         if self.__transferClient is not None:
@@ -406,24 +406,36 @@ class RemoteShell(cmd.Cmd):
     def do_vmcheck(self, s):
         try:
             logging.info("Common Processes: ")
-            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe"')
+            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 buff = self.__outputBuffer
                 cprint(buff, "red")
                 self.__outputBuffer = ''
             else:
                 logging.info("No VM Processes found")
-            self.execute_remote('dir "C:\Program Files\VMware"')
-            if len(self.__outputBuffer.strip('\r\n')) > 125: 
-                print(self.__outputBuffer)
+
+            self.execute_remote('dir /B "C:\Program Files\VMware"')
+            if "File Not Found" in self.__outputBuffer.strip('\r\n'):
+                print("C:\Program Files\VMware Not Present")
                 self.__outputBuffer = ''
             else:
                 self.__outputBuffer = ''
-                logging.info('C:\Program Files\VMWare Does not exist')
+                cprint('C:\Program Files\VMWare found', "red")
             self.execute_remote('systeminfo | findstr /i "Manufacturer:"')
             if len(self.__outputBuffer.strip('\r\n')) > 0: 
                 print(self.__outputBuffer)
                 self.__outputBuffer = ''
+            logging.info("Virtual Box Detection")
+            self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxMouse.sys")
+            self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxGuest.sys")
+            if "VBoxMouse.sys" or "VBoxGuest.sys" in self.__outputBuffer:
+                print("[!] Found VBox Files:")
+                cprint(self.__outputBuffer, "red")
+            else:
+                print(self.__outputBuffer.strip('\r\n'))
+            self.__outputBuffer = ''
+
+
         except:
             logging.info("Something went wrong, try again")
 
@@ -596,9 +608,6 @@ class RemoteShell(cmd.Cmd):
             try:
                 self.__outputBuffer += data.decode(CODEC)
             except UnicodeDecodeError:
-                logging.error('Decoding error detected, consider running chcp.com at the target,\nmap the result with '
-                              'https://docs.python.org/3/library/codecs.html#standard-encodings\nand then execute wmiexec.py '
-                              'again with -codec and the corresponding codec')
                 self.__outputBuffer += data.decode(CODEC, errors='replace')
 
         if self.__noOutput is True:
