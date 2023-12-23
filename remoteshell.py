@@ -3,6 +3,10 @@ from __future__ import print_function
 import sys
 import os
 import cmd
+# for random_sig() function
+import random
+import string
+#
 from termcolor import cprint
 import time
 import logging
@@ -12,12 +16,22 @@ import uuid
 from six import PY2
 
 
-uu_one = f"{{{uuid.uuid4()}}}".upper()
-uu_two = f"{{{uuid.uuid4()}}}".upper()
+def random_sig():
+    """
+    Function will create a random file name to store the command output before it is read in and returned back to the user
 
-# create permutation function here, different encoding schemes via random chance 
+    Return: random file name to avoid signatures, or at least limit signature exposure
+    """
+    rand_length = random.randint(1,60)
+    if rand_length % 2 == 0:
+        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
+    else:
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length))
 
-OUTPUT_FILENAME = f"{uu_one}{uu_two}"
+OUTPUT_FILENAME = random_sig()
+# uncomment below to ensure random output filename generation
+print(OUTPUT_FILENAME)
+
 CODEC = sys.stdout.encoding
 
 class RemoteShell(cmd.Cmd):
