@@ -408,7 +408,7 @@ class RemoteShell(cmd.Cmd):
     def do_vmcheck(self, s):
         try:
             logging.info("Common Processes: ")
-            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe"')
+            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe vboxservice.exe vmwaretray.exe vmwareuser.exe vmware.exe vmount2.exe VGAuthService.exe vmacthlp.exe vmsrvc.exe vmusrvc.exe prl_cc.exe prl_tools.exe prl_cc.exe xenservice.exe xsvc_depriv.exe joeboxserver.exe joeboxcontrol.exe qemu-ga.exe WPE Pro.exe"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 self.format_print_buff()
             else:
