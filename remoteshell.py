@@ -133,7 +133,8 @@ class RemoteShell(cmd.Cmd):
  + Process Accounting                                                                      +
  --------------------------------------------------------------------------------------------
   av                        - looks for Anti-Virus solutions running in the process list
-  vmcheck                    - attempts to detect if we are running in a vm
+  vmcheck                   - attempts to detect if we are running in a vm
+  securitytools             - looks for security researcher tools in the process list 
  --------------------------------------------------------------------------------------------
  + Credential Harvesting                                                                    +
  --------------------------------------------------------------------------------------------
@@ -404,6 +405,15 @@ class RemoteShell(cmd.Cmd):
         else:
             logging.info("Cached Logon Credential Amount")
             self.format_print_buff()
+
+
+    def do_securitytools(self, s):
+        logging.info("Security Researcher Tools: ")
+        self.execute_remote('tasklist /svc | findstr /i "pd64.exe ida64.exe ida32.exe x64dbg.exe x32dbg.exe hiew32.exe sysanalyzer.exe petools.exe dnSpy.exe lordpe.exe PE-bear.exe Procmon.exe Procmon64.exe Autoruns.exe Autoruns64.exe Dbgview.exe dbgview64.exe Diskmon.exe Diskmon64.exe portmon.exe procdump.exe procdump64.exe tcpview.exe tcpview64.exe procexp.exe procexp64.exe die.exe ProcessHacker.exe Wireshark.exe dumpcap.exe"')
+        if len(self.__outputBuffer.strip('\r\n')) > 0:
+            self.format_print_buff()
+        else:
+            logging.info("No Security Researcher Processes Found")
 
     def do_vmcheck(self, s):
         try:
