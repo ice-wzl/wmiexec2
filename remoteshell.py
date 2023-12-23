@@ -30,7 +30,7 @@ def random_sig():
 
 OUTPUT_FILENAME = random_sig()
 # uncomment below to ensure random output filename generation
-print(OUTPUT_FILENAME)
+# print(OUTPUT_FILENAME)
 
 CODEC = sys.stdout.encoding
 
