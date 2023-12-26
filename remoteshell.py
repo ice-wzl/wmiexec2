@@ -189,9 +189,12 @@ class RemoteShell(cmd.Cmd):
                     print("[*] %s" % (item))
                     self.execute_remote(item.strip('\n'))
                     time.sleep(1)
+                    '''
                     if len(self.__outputBuffer.strip('\r\n')) > 0:
                         print(self.__outputBuffer)
                         self.__outputBuffer = ''
+                    '''
+                    self.format_print_buff()
                 logging.info("Survey Completed")
             except Exception as e:
                 print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
@@ -473,7 +476,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
 
         try:
@@ -483,7 +486,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
 
         try:
@@ -493,7 +496,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
         try:
             logging.info("Looking for: %s, %s" % (six, seven))
@@ -502,7 +505,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
 
         try:
@@ -512,7 +515,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
 
         try:
@@ -522,7 +525,7 @@ class RemoteShell(cmd.Cmd):
                 self.format_print_buff()
             else:
                 print("Nothing Found")
-        except error as e:
+        except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
 
     def do_regrip(self, s):
@@ -570,7 +573,7 @@ class RemoteShell(cmd.Cmd):
                 self.__pwd = ntpath.normpath(ntpath.join(self.__pwd, s))
             self.execute_remote('cd ')
             self.__pwd = self.__outputBuffer.strip('\r\n')
-            self.prompt = (self.__pwd + '>')
+            self.prompt = (self.__pwd + '> ')
             if self.__shell_type == 'powershell':
                 self.prompt = '\U0001F47B' + ' ' + 'PS ' + self.prompt + ' '
             self.__outputBuffer = ''
