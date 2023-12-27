@@ -11,7 +11,7 @@ import logging
 import ntpath
 from base64 import b64encode
 from six import PY2
-
+from av import *
 
 def random_sig():
     """
@@ -362,9 +362,12 @@ class RemoteShell(cmd.Cmd):
     # fix this dumpster fire
     def do_av(self, s):
         try:
-            self.execute_remote(
-                'tasklist /svc | findstr /i "MsMpEng.exe WinDefend MSASCui.exe navapsvc.exe avkwctl.exe fsav32.exe mcshield.exe ntrtscan.exe avguard.exe ashServ.exe avengine.exe avgemc.exe tmntsrv.exe kavfswp.exe kavtray.exe vapm.exe avpui.exe avp.exe"')
-            self.format_print_buff()
+            #self.execute_remote('wmic process get name')
+            self.execute_remote('tasklist /svc | findstr /v ctfmon.exe')
+            for i in av_procs:
+                if i in self.__outputBuffer.strip('\r\n'):
+                    print(i)
+            self.__outputBuffer = ''
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
