@@ -3,16 +3,13 @@ from __future__ import print_function
 import sys
 import os
 import cmd
-# for random_sig() function
 import random
 import string
-#
 from termcolor import cprint
 import time
 import logging
 import ntpath
 from base64 import b64encode
-import uuid
 from six import PY2
 
 
@@ -22,17 +19,33 @@ def random_sig():
 
     Return: random file name to avoid signatures, or at least limit signature exposure
     """
-    rand_length = random.randint(3, 60)
-    if rand_length % 2 == 0:
-        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
+    guid_or_not = random.randint(1,10)
+    if guid_or_not % 2 == 0:
+
+        rand_length = random.randint(8, 32)
+        if rand_length % 2 == 0:
+            guid = ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
+            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
+            return '{' + ''.join(guid2) + '}'
+        else:
+            guid = list(''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length)))
+            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
+            return '{' + ''.join(guid2) + '}'
     else:
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length))
+
+        rand_length = random.randint(8, 32)
+        if rand_length % 2 == 0:
+            guid = ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
+            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
+            return ''.join(guid2)
+        else:
+            guid = list(''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length)))
+            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
+            return ''.join(guid2)
+
 
 
 OUTPUT_FILENAME = random_sig()
-# uncomment below to ensure random output filename generation
-# print(OUTPUT_FILENAME)
-
 CODEC = sys.stdout.encoding
 
 
