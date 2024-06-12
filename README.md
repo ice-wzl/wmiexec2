@@ -134,13 +134,41 @@ Nothing Found
 
 ## Tunneling
 - Leverage Windows built in `netsh` tunneling without having to type the whole thing out 
-- See picture for usage options
-- ![tuns1](https://user-images.githubusercontent.com/75596877/218882531-aefcacce-de38-418d-9c8e-e9f21a6e6a7a.png)
+- See below for usage options
+````
+👻 PS C:\>  showtun
+👻 PS C:\>  addtun 10000 10.0.0.5 443
+👻 PS C:\>  showtun
+
+
+
+Listen on ipv4:             Connect to ipv4:
+
+Address         Port        Address         Port
+--------------- ----------  --------------- ----------
+*               10000       10.0.0.5        443
+
+
+👻 PS C:\>  deltun 10000
+👻 PS C:\>  showtun
+👻 PS C:\>  
+````
 ## Loggrab
 - Download log file of your choice
 - Will download any file in `C:\windows\system32\winevt\logs`
 - Use: `loggrab Security.evtx`
-- ![image](https://user-images.githubusercontent.com/75596877/218882689-6ea2c4f3-d037-45f7-9a99-b267ab310281.png)
+````
+👻 PS C:\>  loggrab Security.evtx
+[*] Security.evtx
+[*] Downloading C:\\Windows\system32\spool\drivers\color\Security.evtx
+
+
+        1 file(s) copied.
+👻 PS C:\>  !ls
+av.py  debug.log  __pycache__  README.md  remoteshell.py  requirements.txt  Security.evtx  survey.conf	wmiexec2.py
+👻 PS C:\>  
+
+````
 # Tokens 
 - This module will enumerate your currently Enabled tokens and attempt to match them with a priv esc
 ````
