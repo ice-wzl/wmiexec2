@@ -1,6 +1,6 @@
 # wmiexec2.0
 ## Overview
-- `wmiexec2.0` is the same `wmiexec` that everyone knows and loves (debatable).  
+- `wmiexec2.0` is the same `wmiexec` that everyone knows and loves.  
 - This 2.0 version is obfuscated to avoid well known signatures from various AV engines.  
 - It also has a handful of additional built in modules to help automate some common tasks on Red team engagements.  
 - This script is under active development and will improve with time.  
@@ -34,8 +34,7 @@ C:\>help
 ````
 ## Connection
 - You can still connect to the remote machine the exact same way.
-- Recommend you use `-shell-type powershell` until I have had further time to test all the modules on both `cmd` and `powershell`
-- In the meantime if you are worried about `powershell` logging just downgrade to `powershell 2.0`
+- You can specify whether you want a `powershell` shell or a `cmd` shell by adding the flag `--shell-type powershell` or `--shell-type cmd` 
 - Password auth + NT Hash auth still both apply 
 ````
 python3 wmiexec2.0.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
@@ -47,7 +46,7 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - `lput {src_file} {dst_file}` upload local file to remote machine path 
 - `lget {file}` download remote file to your local machine
 - `! {cmd}` execute local system command --> `!ls` lists your current directory on your local machine 
-## My modules
+## Additional modules
 - Everything else from here and below is additional features added into `wmiexec` to make it `wmiexec2.0`
 - `cat` - just to make this more unix friendly simply uses `type` on the remote machine to view a file....just an alias you can use
 - `ls` || `ls C:\Users` - allows you to view your current target directory. Its executing the `dir /a` command so you will see hidden files by default without any other special options
@@ -92,3 +91,42 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 ### survey
 - ![image](https://user-images.githubusercontent.com/75596877/218883378-4b26c8df-4e6e-45e8-a29f-b34bcaeea448.png)
 
+## Known impacket issues 
+- If you recieve this error:
+````
+python3 wmiexec2.py Administrator:'abc123!!!'@172.17.0.2 -shell-type powershell  
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+[*] SMBv3.0 dialect used
+[-] Can't find a valid stringBinding to connect
+````
+- This is usually caused when a target system is NAT'ed in some way. A target behind a router, a cloud VPS, or a docker container are three good examples that will cause this error.
+- To read more
+- https://github.com/fortra/impacket/issues/272
+### To Fix
+- Find your `dcomrt.py` file (if you `pip3 install -r requirements.txt`) it should be under `~`
+````
+find / -type f -name "dcomrt.py" 2>/dev/null
+/opt/impacket-0.11.0/build/lib/impacket/dcerpc/v5/dcomrt.py
+/opt/impacket-0.11.0/impacket/dcerpc/v5/dcomrt.py
+/opt/Responder/tools/MultiRelay/impacket-dev/impacket/dcerpc/v5/dcomrt.py
+/home/ubuntu/.local/lib/python3.10/site-packages/impacket/dcerpc/v5/dcomrt.py
+````
+- Edit the file
+````
+vim /home/ubuntu/.local/lib/python3.10/site-packages/impacket/dcerpc/v5/dcomrt.py
+````
+- Find this line
+````
+if stringBinding is None:
+````
+- Comment out this line right before the above line
+````
+#raise Exception('Can\'t find a valid stringBinding to connect')
+````
+- Add these two lines instead
+````
+stringBinding = 'ncacn_ip_tcp:%s%s' % (self.get_target(), bindingPort)
+LOG.info('Can\'t find a valid stringBinding to connect,use default!')
+````
+- That should fix the issue!
