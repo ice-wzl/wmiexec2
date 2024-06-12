@@ -196,11 +196,42 @@ av.py  debug.log  __pycache__  README.md  remoteshell.py  requirements.txt  Secu
 - run module with `survey` which will print out the command you ran plus the output of that command
 - Or run with `survey save`this will return none of the commands to stdout, but will save all commands run and their output into `survey.txt` located in your local pwd.
 ### survey save 
-- ![image](https://user-images.githubusercontent.com/75596877/218883217-16dbf400-fb87-44bf-86a7-93e5f677070c.png)
-- ![image](https://user-images.githubusercontent.com/75596877/218883247-7fed82d4-8b5d-402b-9db0-85abf74a5e07.png)
+- to run the survey module and save the output to your local station (No stdout)
+````
+👻 PS C:\>  survey save
+[*] Saving all output from survey to survey.txt in your local pwd
+[*] Starting Survey
+[*] Survey Completed
+👻 PS C:\>  !ls
+av.py  debug.log  __pycache__  README.md  remoteshell.py  requirements.txt  Security.evtx  survey.conf	survey.txt  wmiexec2.py
+👻 PS C:\>  !head survey.txt
+[*] hostname
+ 
+DOCKERW-VG85334
+[*] whoami
+ 
+dockerw-vg85334\administrator
+[*] whoami /priv
+ 
+PRIVILEGES INFORMATION
+----------------------
+👻 PS C:\>  
+````
 ### survey
-- ![image](https://user-images.githubusercontent.com/75596877/218883378-4b26c8df-4e6e-45e8-a29f-b34bcaeea448.png)
+````
+👻 PS C:\>  survey
+[*] Starting Survey
+[*] hostname
 
+DOCKERW-VG85334
+
+[*] whoami
+
+dockerw-vg85334\administrator
+
+[*] whoami /priv
+--snip--
+````
 ## Known impacket issues 
 - If you recieve this error:
 ````
