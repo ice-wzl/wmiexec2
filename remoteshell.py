@@ -78,6 +78,20 @@ class RemoteShell(cmd.Cmd):
         if self.__silentCommand is True:
             self.__shell = ''
 
+    @property
+    def cwd(self): return self.__pwd
+    @cwd.setter
+    def cwd(self, v): self.__pwd = v
+
+    @property
+    def share(self): return self.__share
+
+    @property
+    def smb(self): return self.__transferClient
+
+    @property
+    def shell_type(self): return self.__shell_type
+
     def format_print_buff(self):
         if len(self.__outputBuffer.strip('\r\n')) > 0:
             print(self.__outputBuffer)
@@ -362,19 +376,16 @@ class RemoteShell(cmd.Cmd):
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
+
     def do_exit(self, s):
         return True
-
-    def do_EOF(self, s):
-        print()
-        return self.do_exit(s)
+    
 
     def emptyline(self):
         return False
 
-    def do_cd(self, s):
-        print('cd ' + s)
 
+    def do_cd(self, s):
         raw = (s or '').strip()
         # remove surrounding quotes only
         if len(raw) >= 2 and raw[0] == raw[-1] == '"':
@@ -399,19 +410,10 @@ class RemoteShell(cmd.Cmd):
         # try change dir remotely (single cmd invocation)
         self.execute_remote('cd /d "{}"'.format(target))
 
-        print(len(self.__outputBuffer.strip('\r\n')))
         if len(self.__outputBuffer.strip('\r\n')) > 0:
             # any error text printed by cmd, show and keep current pwd
             self.format_print_buff()
             return
-
-        # success path: refresh pwd by querying plain 'cd '
-        if PY2:
-            print("PY2 True")
-        else:
-            print("PY2 False")
-            print(target)
-            print(target)
 
         self.__pwd = target
         self.execute_remote('cd ')
@@ -475,7 +477,7 @@ class RemoteShell(cmd.Cmd):
                     self.__outputBuffer = ''
                     break
                 # optional: global timeout to avoid rare infinite loops
-                if time.time() - start > 30:
+                if time.time() - start > 300:
                     logging.warning('Timeout waiting for remote output.')
                     break
                 time.sleep(0.5)
