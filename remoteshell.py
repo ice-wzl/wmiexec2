@@ -15,6 +15,9 @@ from six import PY2
 from modules.av.av_procs import av_procs
 from modules.av.evasion import generate_unique_signature
 from modules.av.evasion import generate_temp_permutation
+from modules.av.opsec import security_tools
+from modules.av.opsec import vm
+from modules.av.msft_defender import defender_checks
 
 from modules.system_info.sysinfo import basic_system_info
 from modules.system_info.sysinfo import get_mounts
@@ -22,6 +25,10 @@ from modules.system_info.sysinfo import get_mounts
 from modules.help.help import print_module_help
 
 from modules.survey.survey import survey
+
+from modules.local_commands.local_commands import local_get
+from modules.local_commands.local_commands import local_put
+from modules.local_commands.local_commands import local_cd
 
 def random_sig():
     return generate_unique_signature()
@@ -111,35 +118,15 @@ class RemoteShell(cmd.Cmd):
         
 
     def do_lcd(self, s):
-        if s == '':
-            print(os.getcwd())
-        else:
-            try:
-                os.chdir(s)
-            except Exception as e:
-                logging.error(str(e))
+        return local_cd(self, s)
 
     # add md5 before after 
     # add a progress bar. see how ivan does his 
     # import tqdm
 
     def do_lget(self, src_path):
+        return local_get(self, src_path)
 
-        try:
-            import ntpath
-            newPath = ntpath.normpath(ntpath.join(self.__pwd, src_path))
-            drive, tail = ntpath.splitdrive(newPath)
-            filename = ntpath.basename(tail)
-            fh = open(filename, 'wb')
-            logging.info("Downloading %s\\%s" % (drive, tail))
-            self.__transferClient.getFile(drive[:-1] + '$', tail, fh.write)
-            fh.close()
-
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-
-            if os.path.exists(filename):
-                os.remove(filename)
 
     def do_addtun(self, s):
         lport = s.split(" ")[0]
@@ -187,26 +174,8 @@ class RemoteShell(cmd.Cmd):
     # add progress bar, see how ivan does his
     # add md5 before after 
     def do_lput(self, s):
-        try:
-            params = s.split(' ')
-            if len(params) > 1:
-                src_path = params[0]
-                dst_path = params[1]
-            elif len(params) == 1:
-                src_path = params[0]
-                dst_path = ''
-
-            src_file = os.path.basename(src_path)
-            fh = open(src_path, 'rb')
-            dst_path = dst_path.replace('/', '\\')
-            import ntpath
-            pathname = ntpath.join(ntpath.join(self.__pwd, dst_path), src_file)
-            drive, tail = ntpath.splitdrive(pathname)
-            logging.info("Uploading %s to %s" % (src_file, pathname))
-            self.__transferClient.putFile(drive[:-1] + '$', tail, fh.read)
-            fh.close()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return local_put(self, s)
+        
 
     # fix this dumpster fire
     def do_av(self, s):
@@ -221,44 +190,7 @@ class RemoteShell(cmd.Cmd):
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
     def do_defender(self, s):
-        try:
-            logging.info('Defender Install Location')
-            self.execute_remote('reg query "HKLM\Software\Microsoft\Windows Defender" /F InstallLocation | findstr /i InstallLocation')
-            self.format_print_buff()
-
-            self.execute_remote('reg query "HKLM\Software\Microsoft\Windows Defender" /F IsServiceRunning')
-            if "0x1" in self.__outputBuffer:
-                logging.info('Defender Service is Running')
-            elif "0x0" in self.__outputBuffer:
-                logging.info('Defender Service is not Running')
-            self.__outputBuffer = ''
-
-            logging.info('Defender Process Exclusions')
-            self.execute_remote('reg query "HKLM\Software\Microsoft\Windows Defender\Exclusions\Processes"')
-            if len(self.__outputBuffer.strip('\r\n')) == 0:
-                print('\tNo Process Exclusions')
-            logging.info('Defender Path Exclusions')
-            self.execute_remote('reg query "HKLM\Software\Microsoft\Windows Defender\Exclusions\Paths" | findstr /i REG_DWORD')
-            self.format_print_buff()
-
-            self.execute_remote('reg query "HKLM\Software\Microsoft\Windows Defender\Real-Time Protection" /F DisableRealtimeMonitoring')
-            if "0x0" in self.__outputBuffer:
-                logging.info('Real Time Protection is Enabled')
-            elif "0x1" in self.__outputBuffer:
-                logging.info('Real Time Protection is Disabled')
-            self.__outputBuffer = ''
-
-            self.execute_remote('reg query "HKLM\SOFTWARE\Microsoft\Windows Defender\Features" /e /F TamperProtection')
-            if "0x0" or "0x4" in self.__outputBuffer:
-                logging.info('Tamper Protection is Disabled')
-            elif "0x5" in self.__outputBuffer:
-                logging.info('Tamper Protection is Enabled')
-            else:
-                logging.info('Unknown value set for Tamper Protection')
-                self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-
+        return defender_checks(self, s)
 
 
     # fix this output
@@ -321,45 +253,11 @@ class RemoteShell(cmd.Cmd):
             self.format_print_buff()
 
     def do_securitytools(self, s):
-        logging.info("Security Researcher Tools: ")
-        self.execute_remote(
-            'tasklist /svc | findstr /i "pd64.exe ida64.exe ida32.exe x64dbg.exe x32dbg.exe hiew32.exe sysanalyzer.exe petools.exe dnSpy.exe lordpe.exe PE-bear.exe Procmon.exe Procmon64.exe Autoruns.exe Autoruns64.exe Dbgview.exe dbgview64.exe Diskmon.exe Diskmon64.exe portmon.exe procdump.exe procdump64.exe tcpview.exe tcpview64.exe procexp.exe procexp64.exe die.exe ProcessHacker.exe Wireshark.exe dumpcap.exe"')
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            self.format_print_buff()
-        else:
-            logging.info("No Security Researcher Processes Found")
+        return security_tools(self, s)
 
     def do_vmcheck(self, s):
-        try:
-            logging.info("Common Processes: ")
-            self.execute_remote(
-                'tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe vboxservice.exe vmwaretray.exe vmwareuser.exe vmware.exe vmount2.exe VGAuthService.exe vmacthlp.exe vmsrvc.exe vmusrvc.exe prl_cc.exe prl_tools.exe prl_cc.exe xenservice.exe xsvc_depriv.exe joeboxserver.exe joeboxcontrol.exe qemu-ga.exe WPE Pro.exe"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                logging.info("No VM Processes found")
-
-            self.execute_remote('dir /B "C:\Program Files\VMware"')
-            if "File Not Found" in self.__outputBuffer.strip('\r\n'):
-                print("C:\Program Files\VMware Not Present")
-                self.__outputBuffer = ''
-            else:
-                self.__outputBuffer = ''
-                cprint('C:\Program Files\VMWare found', "red")
-            self.execute_remote('systeminfo | findstr /i "Manufacturer:"')
-            self.format_print_buff()
-            logging.info("Virtual Box Detection")
-            self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxMouse.sys")
-            self.execute_remote("dir /B C:\Windows\System32\drivers\VBoxGuest.sys")
-            if "VBoxMouse.sys" or "VBoxGuest.sys" in self.__outputBuffer:
-                print("[!] Found VBox Files:")
-                cprint(self.__outputBuffer, "red")
-            else:
-                print(self.__outputBuffer.strip('\r\n'))
-            self.__outputBuffer = ''
-
-        except error as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        return vm(self, s)
+        
 
     def do_cat(self, s):
         try:
@@ -475,20 +373,54 @@ class RemoteShell(cmd.Cmd):
         return False
 
     def do_cd(self, s):
-        self.execute_remote('cd ' + s)
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            self.format_print_buff()
+        print('cd ' + s)
+
+        raw = (s or '').strip()
+        # remove surrounding quotes only
+        if len(raw) >= 2 and raw[0] == raw[-1] == '"':
+            raw = raw[1:-1]
+
+        # resolve target path relative to current self.__pwd
+        if raw in ('', '.'):
+            target = self.__pwd
+        elif raw in ('\\', '/'):
+            drive, _ = ntpath.splitdrive(self.__pwd)
+            target = drive + '\\'
         else:
-            if PY2:
-                self.__pwd = ntpath.normpath(ntpath.join(self.__pwd, s.decode(sys.stdin.encoding)))
+            drv, _ = ntpath.splitdrive(raw)
+            if drv:
+                target = ntpath.normpath(raw)                    # absolute like C:\Foo
+            elif raw.startswith('\\'):
+                cur_drive, _ = ntpath.splitdrive(self.__pwd)     # \Windows → C:\Windows
+                target = ntpath.normpath(cur_drive + raw)
             else:
-                self.__pwd = ntpath.normpath(ntpath.join(self.__pwd, s))
-            self.execute_remote('cd ')
-            self.__pwd = self.__outputBuffer.strip('\r\n')
-            self.prompt = (self.__pwd + '> ')
-            if self.__shell_type == 'powershell':
-                self.prompt = '\U0001F47B' + ' ' + 'PS ' + self.prompt + ' '
-            self.__outputBuffer = ''
+                target = ntpath.normpath(ntpath.join(self.__pwd, raw))
+
+        # try change dir remotely (single cmd invocation)
+        self.execute_remote('cd /d "{}"'.format(target))
+
+        print(len(self.__outputBuffer.strip('\r\n')))
+        if len(self.__outputBuffer.strip('\r\n')) > 0:
+            # any error text printed by cmd, show and keep current pwd
+            self.format_print_buff()
+            return
+
+        # success path: refresh pwd by querying plain 'cd '
+        if PY2:
+            print("PY2 True")
+        else:
+            print("PY2 False")
+            print(target)
+            print(target)
+
+        self.__pwd = target
+        self.execute_remote('cd ')
+        self.__pwd = self.__outputBuffer.strip('\r\n')
+        self.prompt = (self.__pwd + '> ')
+        if self.__shell_type == 'powershell':
+            self.prompt = '\U0001F47B' + ' ' + 'PS ' + self.prompt + ' '
+        self.__outputBuffer = ''
+
 
     def default(self, line):
         # Let's try to guess if the user is trying to change drive
@@ -521,21 +453,38 @@ class RemoteShell(cmd.Cmd):
             self.__outputBuffer = ''
             return
 
+        start = time.time()
         while True:
             try:
                 self.__transferClient.getFile(self.__share, self.__output, output_callback)
                 break
             except Exception as e:
-                if str(e).find('STATUS_SHARING_VIOLATION') >= 0:
-                    # Output not finished, let's wait
+                es = str(e)
+                if 'STATUS_SHARING_VIOLATION' in es:
                     time.sleep(1)
-                    pass
-                elif str(e).find('Broken') >= 0:
-                    # The SMB Connection might have timed out, let's try reconnecting
+                    continue
+                elif 'Broken' in es:
                     logging.debug('Connection broken, trying to recreate it')
                     self.__transferClient.reconnect()
                     return self.get_output()
-        self.__transferClient.deleteFile(self.__share, self.__output)
+                elif ('STATUS_OBJECT_NAME_NOT_FOUND' in es or
+                    'STATUS_OBJECT_PATH_NOT_FOUND' in es or
+                    'The system cannot find the file specified' in es):
+                    # Command produced no output file (failed early). Stop waiting.
+                    logging.debug('Output file not found; command likely failed before redirection.')
+                    self.__outputBuffer = ''
+                    break
+                # optional: global timeout to avoid rare infinite loops
+                if time.time() - start > 30:
+                    logging.warning('Timeout waiting for remote output.')
+                    break
+                time.sleep(0.5)
+
+        try:
+            self.__transferClient.deleteFile(self.__share, self.__output)
+        except Exception:
+            pass
+
 
     def execute_remote(self, data, shell_type='cmd'):
         if shell_type == 'powershell':
