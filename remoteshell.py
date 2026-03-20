@@ -10,6 +10,7 @@ from base64 import b64encode
 from six import PY2
 
 from modules.av.av_procs import av_procs
+from modules.av.opsec_procs import opsec_procs
 
 from modules.av.evasion import generate_unique_signature
 from modules.av.evasion import generate_temp_permutation
@@ -177,21 +178,19 @@ class RemoteShell(cmd.Cmd):
         return local_put(self, s)
         
 
-    # fix this dumpster fire
     def do_av(self, s):
         try:
-            #self.execute_remote('wmic process get name')
-            self.execute_remote('tasklist /svc | findstr /v ctfmon.exe')
+            buff, err = self.get_process_list()
             for i in av_procs:
-                if i in self.__outputBuffer.strip('\r\n'):
+                if i in buf:
                     print(i)
             self.__outputBuffer = ''
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
+
     def do_defender(self, s):
         return defender_checks(self, s)
-
 
     # fix this output
     def do_tokens(self, s):
@@ -206,13 +205,20 @@ class RemoteShell(cmd.Cmd):
     def do_vmcheck(self, s):
         return vm(self, s)
         
-
     def do_cat(self, s):
         try:
             self.execute_remote('type ' + s)
             self.format_print_buff()
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+
+    def get_process_list(self) -> tuple[str, str]:
+        try:
+            self.execute_remote('tasklist /svc')
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                return self.__outputBuffer, ''
+        except Exception as e:
+            return '', e
 
     def get_directory_listing(self, path: str) -> tuple[str, str]:
         try:
@@ -224,7 +230,6 @@ class RemoteShell(cmd.Cmd):
             print("[!] Something went wrong, see below for error:\n", e)
             return '', e
         
-
     def get_directory_listing_findstr(self, path: str, findstr_args: str) -> tuple[str, str]:
         try:
             self.execute_remote(f'dir {path} | findstr /i {findstr_args}')
@@ -258,18 +263,14 @@ class RemoteShell(cmd.Cmd):
             else:
                 self.print_buf(buf)
 
-
     def do_regrip(self, s):
         return regrip(self, s)
-
 
     def do_exit(self, s):
         return True
     
-
     def emptyline(self):
         return False
-
 
     def do_cd(self, s):
         raw = (s or '').strip()

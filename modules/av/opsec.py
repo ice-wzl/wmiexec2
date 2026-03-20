@@ -2,27 +2,32 @@
 import logging
 from termcolor import cprint
 
+from opsec_procs import opsec_procs
+from vm_procs import vm_processes
 
 def security_tools(self, s):
     logging.info("Security Researcher Tools: ")
-    self.execute_remote(
-        'tasklist /svc | findstr /i "pd64.exe ida64.exe ida32.exe x64dbg.exe x32dbg.exe hiew32.exe sysanalyzer.exe petools.exe dnSpy.exe lordpe.exe PE-bear.exe Procmon.exe Procmon64.exe Autoruns.exe Autoruns64.exe Dbgview.exe dbgview64.exe Diskmon.exe Diskmon64.exe portmon.exe procdump.exe procdump64.exe tcpview.exe tcpview64.exe procexp.exe procexp64.exe die.exe ProcessHacker.exe Wireshark.exe dumpcap.exe"')
-    buf = (self.out or '').strip('\r\n')
-    if buf:
-        self.format_print_buff()
-    else:
+    count = 0
+    buf, err = self.get_process_list()
+    for i in opsec_procs:
+        if i in buf:
+            print(i)
+            count += 1
+    self.__outputBuffer = ''
+    if count == 0:
         logging.info("No Security Researcher Processes Found")
-
 
 def vm(self, s):
     try:
         logging.info("Common Processes: ")
-        self.execute_remote(
-            'tasklist /svc | findstr /i "vmtoolsd.exe VBoxTray.exe vboxservice.exe vmwaretray.exe vmwareuser.exe vmware.exe vmount2.exe VGAuthService.exe vmacthlp.exe vmsrvc.exe vmusrvc.exe prl_cc.exe prl_tools.exe prl_cc.exe xenservice.exe xsvc_depriv.exe joeboxserver.exe joeboxcontrol.exe qemu-ga.exe WPE Pro.exe"')
-        buf = (self.out or '').strip('\r\n')
-        if buf:
-            self.format_print_buff()
-        else:
+        count = 0
+        buf, err = self.get_process_list()
+        for i in vm_processes:
+            if i in buf:
+                print(i)
+                count += 1
+        self.__outputBuffer = ''
+        if count == 0:
             logging.info("No VM Processes found")
 
         self.execute_remote('dir /B "C:\Program Files\VMware"')
