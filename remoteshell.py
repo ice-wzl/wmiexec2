@@ -214,100 +214,50 @@ class RemoteShell(cmd.Cmd):
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
-    def get_directory_listing(self, path: str) -> str:
+    def get_directory_listing(self, path: str) -> tuple[str, str]:
         try:
             self.execute_remote(f'dir {path}')
             # dont think i need the below line anymore 
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                return self.__outputBuffer
+                return self.__outputBuffer, ''
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
-            return e
+            return '', e
         
 
-    def get_directory_listing_findstr(self, path: str, findstr_args: str) -> str:
+    def get_directory_listing_findstr(self, path: str, findstr_args: str) -> tuple[str, str]:
         try:
             self.execute_remote(f'dir {path} | findstr /i {findstr_args}')
             # dont think i need the below line anymore 
             if len(self.__outputBuffer.strip('\r\n')) > 0:
-                return self.__outputBuffer
+                return self.__outputBuffer, ''
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", e)
-            return e
+            return '', e
 
-    # an array, ever heard of one...
     def do_unattend(self, s):
-        one = r"C:\unattend.txt"
-        two = r"C:\unattend.inf"
-        three = r"C:\Windows\sysprep.inf"
-        four = r"C:\Windows\sysprep\sysprep.xml"
-        five = r"C:\Windows\sysprep\sysprep.inf"
-        six = r"C:\Windows\Panther\Unattended.xml"
-        seven = r"C:\Windows\Panther\Unattend.xml"
-        eight = r"C:\Windows\Panther\Unattend\Unattend.xml"
-        nine = r"C:\Windows\Panther\Unattend\Unattended.xml"
-        ten = r"C:\Windows\System32\Sysprep\unattend.xml"
-        eleven = r"C:\Windows\System32\Sysprep\unattended.xml"
-
-        logging.info("Looking for: %s, %s" % (one, two))
-        buf = self.get_directory_listing_findstr('C:\\', 'unattend.txt || unattend.inf')
-        self.print_buf(buf)
-            #self.execute_remote('dir C:\ | findstr /i "unattend.txt || unattend.inf"')
-            #if len(self.__outputBuffer.strip('\r\n')) > 0:
-            #    self.format_print_buff()
-            #else:
-            #    print("Nothing Found")
-        #except Exception as e:
-        #    print("[!] Something went wrong, see below for error:\n", e)
-
-        try:
-            logging.info("Looking for: %s" % (three))
-            self.execute_remote("dir C:\Windows | findstr /i 'sysprep.inf'")
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
+        unattend_files = [
+            r"C:\unattend.txt",
+            r"C:\unattend.inf",
+            r"C:\Windows\sysprep.inf",
+            r"C:\Windows\sysprep\sysprep.xml",
+            r"C:\Windows\sysprep\sysprep.inf",
+            r"C:\Windows\Panther\Unattended.xml",
+            r"C:\Windows\Panther\Unattend.xml",
+            r"C:\Windows\Panther\Unattend\Unattend.xml",
+            r"C:\Windows\Panther\Unattend\Unattended.xml",
+            r"C:\Windows\System32\Sysprep\unattend.xml",
+            r"C:\Windows\System32\Sysprep\unattended.xml",
+        ]
+        for file in unattend_files:
+            logging.info(f"Looking for: {file}")
+            buf, err = self.get_directory_listing(file)
+            if len(err) > 0:
+                print(e)
+                self.__outputBuffer = ''
             else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+                self.print_buf(buf)
 
-        try:
-            logging.info("Looking for: %s, %s" % (four, five))
-            self.execute_remote(r'dir C:\Windows\sysprep | findstr /i "sysprep.inf || sysprep.xml"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
-        try:
-            logging.info("Looking for: %s, %s" % (six, seven))
-            self.execute_remote(r'dir C:\Windows\Panther | findstr /i "Unattended.xml || Unattend.xml"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
-
-        try:
-            logging.info("Looking for: %s, %s" % (eight, nine))
-            self.execute_remote(r'dir C:\Windows\Panther\Unattend | findstr /i "Unattended.xml || Unattend.xml"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
-
-        try:
-            logging.info("Looking for: %s, %s" % (ten, eleven))
-            self.execute_remote('dir C:\Windows\System32\Sysprep | findstr /i "unattend.xml || unattended.xml"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
 
     def do_regrip(self, s):
         return regrip(self, s)
