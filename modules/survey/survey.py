@@ -1,6 +1,11 @@
 #!/usr/bin/python3
+import os
 import logging
 import time
+
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+SURVEY_CONF = os.path.join(_MODULE_DIR, "survey.conf")
+
 
 def survey(self, s):
     save_local_option = s.split(" ")[0]
@@ -11,7 +16,7 @@ def survey(self, s):
             # can have issues here if survey with save option is run on multiple tgts. Should append remote host ip or atleast a timestamp...
             local_save_file = open("survey.txt", "a")
 
-            with open("modules/survey/survey.conf", "r") as fp:
+            with open(SURVEY_CONF, "r") as fp:
                 config_file = fp.readlines()
             for item in config_file:
                 local_save_file.write("[*] %s \n" % (item))
@@ -25,7 +30,7 @@ def survey(self, s):
     else:
         try:
             logging.info("Starting Survey")
-            with open("modules/survey/survey.conf", "r") as fp:
+            with open(SURVEY_CONF, "r") as fp:
                 config_file = fp.readlines()
             for item in config_file:
                 print("[*] %s" % (item))

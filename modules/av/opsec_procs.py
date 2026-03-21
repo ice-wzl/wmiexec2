@@ -1,4 +1,4 @@
-tools = [
+opsec_procs = [
     "pd64.exe",
     "ida64.exe",
     "ida32.exe",
