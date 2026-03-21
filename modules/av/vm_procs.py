@@ -1,0 +1,21 @@
+vm_processes = [
+    "vmtoolsd.exe",
+    "VBoxTray.exe",
+    "vboxservice.exe",
+    "vmwaretray.exe",
+    "vmwareuser.exe",
+    "vmware.exe",
+    "vmount2.exe",
+    "VGAuthService.exe",
+    "vmacthlp.exe",
+    "vmsrvc.exe",
+    "vmusrvc.exe",
+    "prl_cc.exe",
+    "prl_tools.exe",
+    "xenservice.exe",
+    "xsvc_depriv.exe",
+    "joeboxserver.exe",
+    "joeboxcontrol.exe",
+    "qemu-ga.exe",
+    "WPE Pro.exe"
+]
