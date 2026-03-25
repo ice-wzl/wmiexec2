@@ -15,7 +15,7 @@ from modules.av.msft_defender import defender_checks
 from modules.system_info.sysinfo import basic_system_info, get_mounts
 from modules.help.help import print_module_help
 from modules.survey.survey import survey
-from modules.local_commands.local_commands import local_get, local_put, local_cd
+from modules.local_commands.local_commands import local_get, local_put, local_cd, local_pwd
 from modules.post_ex.post_exploitation import enum_credentials, tokens, regrip, check_unattend
 from modules.tunnels.tunnel_mgr import add_tun, show_tun, del_tun
 
@@ -87,7 +87,7 @@ class RemoteShell(cmd.Cmd):
     def print_buf(self, buf: str):
         if len(buf.strip('\r\n')) > 0:
             print(buf)
-            self.__outputBuffer = ''
+            self.__outputBuffer = ''    
 
     # ── remote execution helpers ────────────────────────────────────
 
@@ -222,6 +222,9 @@ class RemoteShell(cmd.Cmd):
 
     def do_lcd(self, s):
         return local_cd(self, s)
+    
+    def do_lpwd(self, s):
+        return local_pwd(self, s)
 
     def do_lget(self, src_path):
         return local_get(self, src_path)

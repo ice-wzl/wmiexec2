@@ -8,6 +8,7 @@ def print_module_help():
   CRTL+L                      - clear screen
   sysinfo                     - see basic information about the host
   lcd {path}                  - changes the current local directory to {path}
+  lpwd                        - see your local pwd
   exit                        - terminates the server process (and this session)
   lput {src_file, dst_path}   - uploads a local file to the dst_path (dst_path = default current dir)
   lget {file}                 - downloads pathname to the current local dir
