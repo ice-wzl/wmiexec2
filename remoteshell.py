@@ -18,6 +18,7 @@ from modules.survey.survey import survey
 from modules.local_commands.local_commands import local_get, local_put, local_cd, local_pwd
 from modules.post_ex.post_exploitation import enum_credentials, tokens, regrip, check_unattend
 from modules.tunnels.tunnel_mgr import add_tun, show_tun, del_tun
+from modules.printer_formatter import format_print_buff as _format_print_buff, print_buf as _print_buf
 
 
 OUTPUT_FILENAME = generate_unique_signature()
@@ -80,14 +81,10 @@ class RemoteShell(cmd.Cmd):
     # ── output helpers ──────────────────────────────────────────────
 
     def format_print_buff(self):
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            print(self.__outputBuffer)
-            self.__outputBuffer = ''
+        _format_print_buff(self)
 
     def print_buf(self, buf: str):
-        if len(buf.strip('\r\n')) > 0:
-            print(buf)
-            self.__outputBuffer = ''    
+        _print_buf(self, buf)
 
     # ── remote execution helpers ────────────────────────────────────
 
