@@ -5,19 +5,20 @@ import os
 import cmd
 import time
 import logging
-import ntpath
 from base64 import b64encode
 from six import PY2
 
+from modules.core.core_commands import ls, cat, cd
 from modules.av.evasion import generate_unique_signature, generate_temp_permutation
 from modules.av.opsec import check_av, security_tools, vm, log_grab
 from modules.av.msft_defender import defender_checks
 from modules.system_info.sysinfo import basic_system_info, get_mounts
 from modules.help.help import print_module_help
 from modules.survey.survey import survey
-from modules.local_commands.local_commands import local_get, local_put, local_cd
+from modules.local_commands.local_commands import local_get, local_put, local_cd, local_pwd
 from modules.post_ex.post_exploitation import enum_credentials, tokens, regrip, check_unattend
 from modules.tunnels.tunnel_mgr import add_tun, show_tun, del_tun
+from modules.printer_formatter import format_print_buff as _format_print_buff, print_buf as _print_buf
 
 
 OUTPUT_FILENAME = generate_unique_signature()
@@ -80,14 +81,10 @@ class RemoteShell(cmd.Cmd):
     # ── output helpers ──────────────────────────────────────────────
 
     def format_print_buff(self):
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            print(self.__outputBuffer)
-            self.__outputBuffer = ''
+        _format_print_buff(self)
 
     def print_buf(self, buf: str):
-        if len(buf.strip('\r\n')) > 0:
-            print(buf)
-            self.__outputBuffer = ''
+        _print_buf(self, buf)
 
     # ── remote execution helpers ────────────────────────────────────
 
@@ -135,60 +132,14 @@ class RemoteShell(cmd.Cmd):
         return False
 
     def do_ls(self, s):
-        if len(s) == 0:
-            try:
-                self.execute_remote('dir /A /N /O:D .')
-                self.format_print_buff()
-            except Exception as e:
-                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
-        else:
-            path = s.split(" ")[0]
-            try:
-                self.execute_remote('dir /A /N /O:D "%s"' % path)
-                self.format_print_buff()
-            except Exception as e:
-                print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return ls(self, s)
 
     def do_cat(self, s):
-        try:
-            self.execute_remote('type ' + s)
-            self.format_print_buff()
-        except Exception as e:
-            print("[!] Something went wrong, see below for error:\n", logging.critical(str(e)))
+        return cat(self, s)
+        
 
     def do_cd(self, s):
-        raw = (s or '').strip()
-        if len(raw) >= 2 and raw[0] == raw[-1] == '"':
-            raw = raw[1:-1]
-
-        if raw in ('', '.'):
-            target = self.__pwd
-        elif raw in ('\\', '/'):
-            drive, _ = ntpath.splitdrive(self.__pwd)
-            target = drive + '\\'
-        else:
-            drv, _ = ntpath.splitdrive(raw)
-            if drv:
-                target = ntpath.normpath(raw)
-            elif raw.startswith('\\'):
-                cur_drive, _ = ntpath.splitdrive(self.__pwd)
-                target = ntpath.normpath(cur_drive + raw)
-            else:
-                target = ntpath.normpath(ntpath.join(self.__pwd, raw))
-
-        self.execute_remote('cd /d "{}"'.format(target))
-
-        if len(self.__outputBuffer.strip('\r\n')) > 0:
-            self.format_print_buff()
-            return
-
-        self.__pwd = target
-        self.execute_remote('cd ')
-        self.__pwd = self.__outputBuffer.strip('\r\n')
-        self.prompt = (self.__pwd + '> ')
-        if self.__shell_type == 'powershell':
-            self.prompt = '\U0001F47B' + ' ' + 'PS ' + self.prompt + ' '
-        self.__outputBuffer = ''
+        return cd(self, s)
 
     def default(self, line):
         if len(line) == 2 and line[1] == ':':
@@ -222,6 +173,9 @@ class RemoteShell(cmd.Cmd):
 
     def do_lcd(self, s):
         return local_cd(self, s)
+    
+    def do_lpwd(self, s):
+        return local_pwd(self, s)
 
     def do_lget(self, src_path):
         return local_get(self, src_path)

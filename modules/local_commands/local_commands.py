@@ -78,3 +78,6 @@ def local_cd(self, s):
             os.chdir(s)
         except Exception as e:
             logging.error(str(e))
+
+def local_pwd(self, s):
+    print(os.getcwd())
