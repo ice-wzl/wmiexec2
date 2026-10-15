@@ -1,257 +1,217 @@
-#!/usr/bin/env python
-#made with <3 by ice-wzl
-from __future__ import division
-from __future__ import print_function
-import sys
+#!/usr/bin/env python3
+"""CLI entry point and WMI connection lifecycle for wmiexec2."""
+
 import argparse
 import logging
+import sys
+from getpass import getpass
+
+from impacket import version
+from impacket.dcerpc.v5.dcom import wmi
+from impacket.dcerpc.v5.dcomrt import COMVERSION, DCOMConnection
+from impacket.dcerpc.v5.dtypes import NULL
 from impacket.examples import logger
 from impacket.examples.utils import parse_target
-from impacket import version
-from impacket.smbconnection import SMBConnection, SMB_DIALECT, SMB2_DIALECT_002, SMB2_DIALECT_21
-from impacket.dcerpc.v5.dcomrt import DCOMConnection, COMVERSION
-from impacket.dcerpc.v5.dcom import wmi
-from impacket.dcerpc.v5.dtypes import NULL
 from impacket.krb5.keytab import Keytab
+from impacket.smbconnection import SMB2_DIALECT_002, SMB2_DIALECT_21, SMB_DIALECT, SMBConnection
 
-from remoteshell import *
+from remoteshell import RemoteShell
 
 
-
-class WMIEXEC:
-    def __init__(self, command='', username='', password='', domain='', hashes=None, aesKey=None, share=None,
-                 noOutput=False, doKerberos=False, kdcHost=None, shell_type=None):
-        self.__command = command
-        self.__username = username
-        self.__password = password
-        self.__domain = domain
-        self.__lmhash = ''
-        self.__nthash = ''
-        self.__aesKey = aesKey
-        self.__share = share
-        self.__noOutput = noOutput
-        self.__doKerberos = doKerberos
-        self.__kdcHost = kdcHost
-        self.__shell_type = shell_type
+class WMIExecutor:
+    def __init__(self, command="", username="", password="", domain="", hashes=None, aes_key=None,
+                 share="ADMIN$", no_output=False, kerberos=False, kdc_host=None, shell_type="cmd",
+                 codec="utf-8"):
+        self.command = command
+        self.username = username
+        self.password = password
+        self.domain = domain
+        self.lmhash = ""
+        self.nthash = ""
+        self.aes_key = aes_key
+        self.share = share
+        self.no_output = no_output
+        self.kerberos = kerberos
+        self.kdc_host = kdc_host
+        self.shell_type = shell_type
+        self.codec = codec
         self.shell = None
-        if hashes is not None:
-            self.__lmhash, self.__nthash = hashes.split(':')
+        if hashes:
+            self.lmhash, self.nthash = hashes.split(":", 1)
 
-    def run(self, addr, silentCommand=False):
-        if self.__noOutput is False and silentCommand is False:
-            smbConnection = SMBConnection(addr, addr)
-            if self.__doKerberos is False:
-                smbConnection.login(self.__username, self.__password, self.__domain, self.__lmhash, self.__nthash)
-            else:
-                smbConnection.kerberosLogin(self.__username, self.__password, self.__domain, self.__lmhash,
-                                            self.__nthash, self.__aesKey, kdcHost=self.__kdcHost)
-
-            dialect = smbConnection.getDialect()
-            if dialect == SMB_DIALECT:
-                logging.info("SMBv1 dialect used")
-                logging.info("[!!] Warning traffic will be unencrypted")
-            elif dialect == SMB2_DIALECT_002:
-                logging.info("SMBv2.0 dialect used")
-            elif dialect == SMB2_DIALECT_21:
-                logging.info("SMBv2.1 dialect used")
-            else:
-                logging.info("SMBv3.0 dialect used")
-        else:
-            smbConnection = None
-
-        dcom = DCOMConnection(addr, self.__username, self.__password, self.__domain, self.__lmhash, self.__nthash,
-                              self.__aesKey, oxidResolver=True, doKerberos=self.__doKerberos, kdcHost=self.__kdcHost)
+    def run(self, address, silent_command=False):
+        smb_connection = None
+        dcom = None
         try:
-            iInterface = dcom.CoCreateInstanceEx(wmi.CLSID_WbemLevel1Login, wmi.IID_IWbemLevel1Login)
-            iWbemLevel1Login = wmi.IWbemLevel1Login(iInterface)
-            iWbemServices = iWbemLevel1Login.NTLMLogin('//./root/cimv2', NULL, NULL)
-            iWbemLevel1Login.RemRelease()
+            if not self.no_output and not silent_command:
+                smb_connection = SMBConnection(address, address)
+                if self.kerberos:
+                    smb_connection.kerberosLogin(
+                        self.username, self.password, self.domain, self.lmhash, self.nthash,
+                        self.aes_key, kdcHost=self.kdc_host,
+                    )
+                else:
+                    smb_connection.login(
+                        self.username, self.password, self.domain, self.lmhash, self.nthash
+                    )
+                self._log_dialect(smb_connection.getDialect())
 
-            win32Process, _ = iWbemServices.GetObject('Win32_Process')
+            dcom = DCOMConnection(
+                address, self.username, self.password, self.domain, self.lmhash, self.nthash,
+                self.aes_key, oxidResolver=True, doKerberos=self.kerberos, kdcHost=self.kdc_host,
+            )
+            interface = dcom.CoCreateInstanceEx(wmi.CLSID_WbemLevel1Login, wmi.IID_IWbemLevel1Login)
+            login = wmi.IWbemLevel1Login(interface)
+            services = login.NTLMLogin("//./root/cimv2", NULL, NULL)
+            login.RemRelease()
+            win32_process, _ = services.GetObject("Win32_Process")
 
-            self.shell = RemoteShell(self.__share, win32Process, smbConnection, self.__shell_type, silentCommand)
-            if self.__command != ' ':
-                self.shell.onecmd(self.__command)
+            self.shell = RemoteShell(
+                self.share, win32_process, smb_connection, self.shell_type,
+                silent_command, codec=self.codec,
+            )
+            if self.command:
+                self.shell.onecmd(self.command)
             else:
                 self.shell.cmdloop()
-        except  (Exception, KeyboardInterrupt) as e:
-            if logging.getLogger().level == logging.DEBUG:
-                import traceback
-                traceback.print_exc()
-            logging.error(str(e))
-            if smbConnection is not None:
-                smbConnection.logoff()
-            dcom.disconnect()
-            sys.stdout.flush()
-            sys.exit(1)
+        finally:
+            if smb_connection is not None:
+                try:
+                    smb_connection.logoff()
+                except Exception:
+                    logging.debug("SMB logoff failed", exc_info=True)
+            if dcom is not None:
+                try:
+                    dcom.disconnect()
+                except Exception:
+                    logging.debug("DCOM disconnect failed", exc_info=True)
 
-        if smbConnection is not None:
-            smbConnection.logoff()
-        dcom.disconnect()
+    @staticmethod
+    def _log_dialect(dialect):
+        if dialect == SMB_DIALECT:
+            logging.warning("SMBv1 dialect used; traffic will be unencrypted")
+        elif dialect == SMB2_DIALECT_002:
+            logging.info("SMBv2.0 dialect used")
+        elif dialect == SMB2_DIALECT_21:
+            logging.info("SMBv2.1 dialect used")
+        else:
+            logging.info("SMBv3 dialect used")
+
+
+# Compatibility for callers that imported the historical name.
+WMIEXEC = WMIExecutor
+
 
 class AuthFileSyntaxError(Exception):
-    '''raised by load_smbclient_auth_file if it encounters a syntax error
-    while loading the smbclient-style authentication file.'''
-
-    def __init__(self, path, lineno, reason):
+    def __init__(self, path, line_number, reason):
         self.path = path
-        self.lineno = lineno
+        self.line_number = line_number
         self.reason = reason
 
     def __str__(self):
-        return 'Syntax error in auth file %s line %d: %s' % (
-            self.path, self.lineno, self.reason)
+        return f"Syntax error in auth file {self.path} line {self.line_number}: {self.reason}"
 
 
 def load_smbclient_auth_file(path):
-    '''Load credentials from an smbclient-style authentication file (used by
-    smbclient, mount.cifs and others).  returns (domain, username, password)
-    or raises AuthFileSyntaxError or any I/O exceptions.'''
-
-    lineno = 0
-    domain = None
-    username = None
-    password = None
-    for line in open(path):
-        lineno += 1
-
-        line = line.strip()
-
-        if line.startswith('#') or line == '':
-            continue
-
-        parts = line.split('=', 1)
-        if len(parts) != 2:
-            raise AuthFileSyntaxError(path, lineno, 'No "=" present in line')
-
-        (k, v) = (parts[0].strip(), parts[1].strip())
-
-        if k == 'username':
-            username = v
-        elif k == 'password':
-            password = v
-        elif k == 'domain':
-            domain = v
-        else:
-            raise AuthFileSyntaxError(path, lineno, 'Unknown option %s' % repr(k))
-
-    return (domain, username, password)
+    values = {"domain": None, "username": None, "password": None}
+    with open(path, encoding="utf-8") as auth_file:
+        for line_number, raw_line in enumerate(auth_file, start=1):
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                raise AuthFileSyntaxError(path, line_number, 'No "=" present in line')
+            key, value = (part.strip() for part in line.split("=", 1))
+            if key not in values:
+                raise AuthFileSyntaxError(path, line_number, f"Unknown option {key!r}")
+            values[key] = value
+    return values["domain"], values["username"], values["password"]
 
 
-# Process command-line arguments.
-if __name__ == '__main__':
+def build_parser(default_codec=None):
+    parser = argparse.ArgumentParser(
+        description="Execute a command or semi-interactive shell through Windows Management Instrumentation."
+    )
+    parser.add_argument("target", help="[[domain/]username[:password]@]<targetName or address>")
+    parser.add_argument("command", nargs="*", help="command to execute; omit for an interactive shell")
+    parser.add_argument("-share", default="ADMIN$", help="share used to retrieve output (default: ADMIN$)")
+    parser.add_argument("-nooutput", action="store_true", help="do not create an SMB output connection")
+    parser.add_argument("-ts", action="store_true", help="add timestamps to logging output")
+    parser.add_argument(
+        "-silentcommand",
+        action="store_true",
+        help="execute without a command-shell prefix or output",
+    )
+    parser.add_argument("-debug", action="store_true", help="enable debug logging")
+    parser.add_argument("-codec", default=default_codec or sys.stdout.encoding or "utf-8",
+                        help="codec used to decode target output")
+    parser.add_argument("-shell-type", default="cmd", choices=("cmd", "powershell"))
+    parser.add_argument("-com-version", metavar="MAJOR.MINOR", help="DCOM version, for example 5.7")
+
+    authentication = parser.add_argument_group("authentication")
+    authentication.add_argument("-hashes", metavar="LMHASH:NTHASH")
+    authentication.add_argument("-no-pass", action="store_true", help="do not prompt for a password")
+    authentication.add_argument("-k", action="store_true", help="use Kerberos authentication")
+    authentication.add_argument("-aesKey", metavar="HEX_KEY")
+    authentication.add_argument("-dc-ip", metavar="ADDRESS")
+    authentication.add_argument("-A", metavar="AUTH_FILE", help="smbclient-style authentication file")
+    authentication.add_argument("-keytab", help="read SPN keys from a keytab")
+    return parser
+
+
+def main(argv=None):
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if not arguments:
+        build_parser().print_help()
+        return 1
+
     print(version.BANNER)
-
-    parser = argparse.ArgumentParser(add_help=True, description="Executes a semi-interactive shell using Windows "
-                                                                "Management Instrumentation.")
-    parser.add_argument('target', action='store', help='[[domain/]username[:password]@]<targetName or address>')
-    parser.add_argument('-share', action='store', default='ADMIN$', help='share where the output will be grabbed from '
-                                                                         '(default ADMIN$)')
-    parser.add_argument('-nooutput', action='store_true', default=False, help='whether or not to print the output '
-                                                                              '(no SMB connection created)')
-    parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
-    parser.add_argument('-silentcommand', action='store_true', default=False,
-                        help='does not execute cmd.exe to run given command (no output)')
-    parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
-    parser.add_argument('-codec', action='store', help='Sets encoding used (codec) from the target\'s output (default '
-                                                       '"%s"). If errors are detected, run chcp.com at the target, '
-                                                       'map the result with '
-                                                       'https://docs.python.org/3/library/codecs.html#standard-encodings and then execute wmiexec.py '
-                                                       'again with -codec and the corresponding codec ' % CODEC)
-    parser.add_argument('-shell-type', action='store', default='cmd', choices=['cmd', 'powershell'],
-                        help='choose a command processor for the semi-interactive shell')
-    parser.add_argument('-com-version', action='store', metavar="MAJOR_VERSION:MINOR_VERSION",
-                        help='DCOM version, format is MAJOR_VERSION:MINOR_VERSION e.g. 5.7')
-    parser.add_argument('command', nargs='*', default=' ', help='command to execute at the target. If empty it will '
-                                                                'launch a semi-interactive shell')
-
-    group = parser.add_argument_group('authentication')
-
-    group.add_argument('-hashes', action="store", metavar="LMHASH:NTHASH", help='NTLM hashes, format is LMHASH:NTHASH')
-    group.add_argument('-no-pass', action="store_true", help='don\'t ask for password (useful for -k)')
-    group.add_argument('-k', action="store_true",
-                       help='Use Kerberos authentication. Grabs credentials from ccache file '
-                            '(KRB5CCNAME) based on target parameters. If valid credentials cannot be found, it will use the '
-                            'ones specified in the command line')
-    group.add_argument('-aesKey', action="store", metavar="hex key", help='AES key to use for Kerberos Authentication '
-                                                                          '(128 or 256 bits)')
-    group.add_argument('-dc-ip', action='store', metavar="ip address", help='IP Address of the domain controller. If '
-                                                                            'ommited it use the domain part (FQDN) specified in the target parameter')
-    group.add_argument('-A', action="store", metavar="authfile", help="smbclient/mount.cifs-style authentication file. "
-                                                                      "See smbclient man page's -A option.")
-    group.add_argument('-keytab', action="store", help='Read keys for SPN from keytab file')
-
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
-
-    options = parser.parse_args()
-
-    # Init the example's logger theme
+    options = build_parser().parse_args(arguments)
     logger.init(options.ts)
-
-    if options.codec is not None:
-        CODEC = options.codec
-    else:
-        if CODEC is None:
-            CODEC = 'utf-8'
-
-    if ' '.join(options.command) == ' ' and options.nooutput is True:
-        logging.error("-nooutput switch and interactive shell not supported")
-        sys.exit(1)
-    if options.silentcommand and options.command == ' ':
-        logging.error("-silentcommand switch and interactive shell not supported")
-        sys.exit(1)
-
-    if options.debug is True:
-        logging.getLogger().setLevel(logging.DEBUG)
-        # Print the Library's installation path
+    logging.getLogger().setLevel(logging.DEBUG if options.debug else logging.INFO)
+    if options.debug:
         logging.debug(version.getInstallationPath())
-    else:
-        logging.getLogger().setLevel(logging.INFO)
 
-    if options.com_version is not None:
+    command_text = " ".join(options.command)
+    if not command_text and (options.nooutput or options.silentcommand):
+        logging.error("-nooutput and -silentcommand require a non-interactive command")
+        return 1
+
+    if options.com_version:
         try:
-            major_version, minor_version = options.com_version.split('.')
-            COMVERSION.set_default_version(int(major_version), int(minor_version))
-        except Exception:
-            logging.error("Wrong COMVERSION format, use dot separated integers e.g. \"5.7\"")
-            sys.exit(1)
+            major, minor = options.com_version.split(".", 1)
+            COMVERSION.set_default_version(int(major), int(minor))
+        except ValueError:
+            logging.error('Wrong COM version format; use dot-separated integers such as "5.7"')
+            return 1
 
     domain, username, password, address = parse_target(options.target)
-
     try:
-        if options.A is not None:
-            (domain, username, password) = load_smbclient_auth_file(options.A)
-            logging.debug('loaded smbclient auth file: domain=%s, username=%s, password=%s' % (
-            repr(domain), repr(username), repr(password)))
+        if options.A:
+            domain, username, password = load_smbclient_auth_file(options.A)
+        domain = domain or ""
 
-        if domain is None:
-            domain = ''
-
-        if options.keytab is not None:
+        if options.keytab:
             Keytab.loadKeysFromKeytab(options.keytab, username, domain, options)
             options.k = True
-
-        if password == '' and username != '' and options.hashes is None and options.no_pass is False and options.aesKey is None:
-            from getpass import getpass
-
+        if options.aesKey:
+            options.k = True
+        if password == "" and username and not options.hashes and not options.no_pass and not options.aesKey:
             password = getpass("Password:")
 
-        if options.aesKey is not None:
-            options.k = True
+        executor = WMIExecutor(
+            command_text, username, password, domain, options.hashes, options.aesKey,
+            options.share, options.nooutput, options.k, options.dc_ip, options.shell_type, options.codec,
+        )
+        executor.run(address, options.silentcommand)
+        return 0
+    except KeyboardInterrupt:
+        logging.error("Interrupted")
+        return 130
+    except Exception as exc:
+        logging.exception("Execution failed") if options.debug else logging.error(str(exc))
+        return 1
 
-        executer = WMIEXEC(' '.join(options.command), username, password, domain, options.hashes, options.aesKey,
-                           options.share, options.nooutput, options.k, options.dc_ip, options.shell_type)
-        executer.run(address, options.silentcommand)
-    except KeyboardInterrupt as e:
-        logging.error(str(e))
-    except Exception as e:
-        if logging.getLogger().level == logging.DEBUG:
-            import traceback
 
-            traceback.print_exc()
-        logging.error(str(e))
-        sys.exit(1)
-
-    sys.exit(0)
+if __name__ == "__main__":
+    raise SystemExit(main())

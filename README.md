@@ -1,209 +1,104 @@
-# ⚡ wmiexec2.0 ⚡
+# wmiexec2
 
-> **The stealthy upgrade to everyone's favorite `wmiexec` — obfuscated, enhanced, and red team ready.**  
-> 💀 *Bypass AV. Automate engagements. Dominate.*
+An extensible WMI command shell for authorized Windows administration and
+security testing. It supports password, NTLM hash, Kerberos, `cmd`, PowerShell,
+file transfer, system survey, security configuration checks, and artifact
+collection.
 
----
+Use this project only on systems you own or are explicitly authorized to test.
 
-## 🚀 Features
+## Installation
 
-- 🎭 Obfuscated to evade signature-based AV detection
-- 🛠️ Built-in red team modules for rapid automation
-- 🐚 Supports `cmd` and `powershell` shell types
-- 📁 Local and remote file transfer (`lput`, `lget`)
-- 📡 Netsh tunneling, token abuse, VM detection, and more
-
----
-
-## 📦 Installation
+Python 3.9 or newer is required.
 
 ```bash
 git clone https://github.com/ice-wzl/wmiexec2.git
-cd wmiexec2/
-pip3 install -r requirements.txt
+cd wmiexec2
+python -m pip install -r requirements.txt
 ```
 
-> ⚠️ **Do NOT use `wget` on GitHub Raw** — it will break emoji characters. Always use `git clone`.
-
----
-
-## 🧪 AV / EDR Compatibility
-
-| Environment                                         | Result                     |
-|-----------------------------------------------------|----------------------------|
-| Windows Server 2022 (Feb 2024 updates)              | ✅ All modules working     |
-| Windows 10 Pro, Defender v1.381.3595.0              | ✅ All modules working     |
-| Windows 10 Pro, Kaspersky Standard 21.8.5           | ✅ All modules working     |
-| Windows 8, Defender v1.383.35.0                     | ✅ All modules working     |
-| Windows 7 Pro, Defender v1.95.191.0 (2010)          | ⚠️ Reg module not working |
-
----
-
-## 🔧 Usage
+For an editable development installation with the `wmiexec2` console command:
 
 ```bash
-python3 wmiexec2.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 --shell-type powershell
-python3 wmiexec2.py WORKGROUP/Administrator:'Password123!@#'@10.0.0.4 --shell-type cmd
+python -m pip install -e ".[dev]"
 ```
 
-> Supports both password and NTLM hash authentication
-
----
-
-## 📚 Commands
-
-| Command                  | Description                                           |
-|--------------------------|-------------------------------------------------------|
-| `help`                   | Show available modules                                |
-| `lcd <path>`             | Change local working directory                        |
-| `exit`                   | Exit shell                                            |
-| `lput <src> <dst>`       | Upload file to target                                |
-| `lget <file>`            | Download file from target                            |
-| `!<command>`             | Run a command locally (e.g., `!ls`)                   |
-| `ls [path]`              | List target directory (uses `dir /a`)                 |
-| `cat <file>`             | Show remote file contents (alias for `type`)          |
-
----
-
-## 🧠 Modules
-
-### `sysinfo`
-Display target user, hostname, IP, and architecture.
+## Usage
 
 ```bash
-sysinfo
+python wmiexec2.py DOMAIN/USERNAME:PASSWORD@10.0.0.2 -shell-type powershell
+wmiexec2 WORKGROUP/Administrator@10.0.0.4
 ```
 
----
+Run `python wmiexec2.py -h` for connection options. Inside an interactive
+session, run `help` for the complete generated command list or `help <command>`
+for command-specific usage. Command help is generated from the same registry
+used for dispatch, so it cannot drift from the installed commands.
 
-### `av`
-Lists common AV product processes via remote enumeration.
+Frequently used commands include:
+
+| Command | Purpose |
+|---|---|
+| `ls`, `cat`, `cd` | Navigate the remote filesystem |
+| `lput`, `lget` | Transfer files |
+| `sysinfo`, `mounts`, `survey` | Enumerate the target |
+| `av`, `defender`, `vmcheck`, `securitytools` | Inspect security and virtualization indicators |
+| `creds`, `tokens`, `unattend` | Inspect credential and privilege configuration |
+| `loggrab`, `regrip` | Collect target artifacts |
+| `addtun`, `showtun`, `deltun` | Manage Windows portproxy entries |
+
+Collected files and saved surveys are written to `.wmiexec2-artifacts/`, which
+is ignored by Git.
+
+## Architecture
+
+```text
+wmiexec2.py                   CLI parsing and connection lifecycle
+remote_session.py             WMI execution and SMB output transport
+remoteshell.py                Interactive UI and registry dispatch
+modules/
+  command_registry.py         Command discovery and metadata
+  context.py                  Stable API exposed to commands
+  commands/                   Self-registering command implementations
+  data/                       Packaged command configuration
+  av/                         Process-indicator data
+tests/                        Unit and integration-boundary tests
+```
+
+Command modules do not receive the interactive shell or raw WMI objects. They
+operate through `CommandContext`, which keeps execution, presentation, file
+transfer, and artifact handling consistent and testable.
+
+## Adding a command
+
+Create a Python file under `modules/commands/` and decorate a handler:
+
+```python
+from modules.command_registry import command
+
+
+@command("hostname", "System", "Display the target hostname", "hostname")
+def hostname(context, arguments):
+    context.write(context.run("hostname"))
+```
+
+No import, shell wrapper, or help-file edit is required. Add tests and run:
 
 ```bash
-av
+ruff check .
+pytest
 ```
 
----
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the command contract and repository
+boundaries.
 
-### `defender`
-Checks Defender installation, service status, exclusions, and tamper protection.
+## Survey configuration
 
-```bash
-defender
-```
+The commands executed by `survey` are stored in
+`modules/data/survey.conf`. Use `survey save` to write results to the artifact
+directory.
 
----
+## Support
 
-### `vmcheck`
-Detects ESXi, VMware, QEMU, and VirtualBox environments.
-
-```bash
-vmcheck
-```
-
----
-
-### `unattend`
-Searches for unattended install config files that may contain credentials.
-
-```bash
-unattend
-```
-
----
-
-### `regrip`
-Dumps `SAM`, `SECURITY`, and `SYSTEM` hives (bypasses Defender as of 6/7/24).
-
-```bash
-regrip
-```
-
----
-
-### `loggrab`
-Download `.evtx` logs from remote system.
-
-```bash
-loggrab Security.evtx
-```
-
----
-
-### `tokens`
-Enumerates active tokens and suggests privesc paths.
-
-```bash
-tokens
-```
-
----
-
-### `survey` / `survey save`
-Run custom recon commands listed in `survey.conf`.
-
-```bash
-survey
-survey save
-```
-
----
-
-### Netsh Tunneling
-
-```bash
-addtun 10000 10.0.0.5 443
-showtun
-deltun 10000
-```
-
----
-
-## 🛠 Known impacket NAT Fix
-
-If you get this error:
-
-```
-[-] Can't find a valid stringBinding to connect
-```
-
-### ➤ Fix
-
-1. Locate your `dcomrt.py`:
-   ```bash
-   find / -type f -name "dcomrt.py" 2>/dev/null
-   ```
-
-2. Edit and replace:
-   ```python
-   # raise Exception("Can't find a valid stringBinding to connect")
-   stringBinding = 'ncacn_ip_tcp:%s%s' % (self.get_target(), bindingPort)
-   LOG.info("Can't find a valid stringBinding to connect, using default!")
-   ```
-
-✅ Done!
-
----
-
-## 💡 Notes
-
-- This tool is **under active development** — submit PRs or issues.
-- All modules built for stealth and speed.
-- Use responsibly in authorized engagements.
-
----
-
-## ⭐ If This Helped You
-
-If `wmiexec2.0` saved you time or helped your ops:
-> 🧠 Spread the knowledge. 🌍 Share the repo. ⭐ Star it.
-
----
-
-## 👻 Author
-
-**ice-wzl**  
-🐙 GitHub: [ice-wzl](https://github.com/ice-wzl)  
-🛠️ Built with ❤️ for red teams.
-
----
+Open an issue for reproducible defects or proposed command APIs. Contributions
+should include tests and must preserve the registry/context boundary.

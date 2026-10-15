@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wmiexec2"
+version = "2.1.0"
+description = "An extensible WMI command shell for authorized security testing"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "impacket>=0.11,<0.12",
+    "termcolor>=2.3,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "ruff>=0.7,<1",
+]
+
+[project.scripts]
+wmiexec2 = "wmiexec2:main"
+
+[tool.setuptools]
+py-modules = ["wmiexec2", "remoteshell", "remote_session"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["modules*"]
+
+[tool.setuptools.package-data]
+"modules.data" = ["*.conf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
