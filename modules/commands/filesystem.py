@@ -6,6 +6,7 @@ import shlex
 
 from modules.command_registry import command
 from modules.context import CommandUsageError
+from modules.powershell import literal
 
 
 def _arguments(value: str):
@@ -15,10 +16,31 @@ def _arguments(value: str):
     return [item[1:-1] if len(item) >= 2 and item[0] == item[-1] == '"' else item for item in lexer]
 
 
-@command("ls", "Filesystem", "List a remote directory", "ls [path]")
+@command("ls", "Filesystem", "List a remote directory", "ls [-depth N] [path]")
 def list_directory(context, arguments: str) -> None:
-    path = arguments.strip() or "."
-    context.write(context.run(f'dir /A /N /O:D "{path}"'))
+    parts = _arguments(arguments)
+    depth = None
+    paths = []
+    index = 0
+    while index < len(parts):
+        if parts[index].lower() == "-depth":
+            if depth is not None or index + 1 >= len(parts) or not parts[index + 1].isdigit():
+                raise CommandUsageError("-depth requires one non-negative integer")
+            depth = int(parts[index + 1])
+            index += 2
+        else:
+            paths.append(parts[index])
+            index += 1
+    if len(paths) > 1:
+        raise CommandUsageError("ls accepts one path")
+
+    path = paths[0] if paths else "."
+    recurse = f" -Depth {depth}" if depth is not None else ""
+    script = (
+        f"Get-ChildItem -LiteralPath {literal(path)} -Force{recurse} -ErrorAction Stop | "
+        "Format-Table Mode,LastWriteTime,Length,FullName -AutoSize | Out-String -Width 240"
+    )
+    context.write(context.run(script, shell_type="powershell"))
 
 
 @command("cat", "Filesystem", "Display a remote file", "cat <path>")

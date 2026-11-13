@@ -42,10 +42,19 @@ Frequently used commands include:
 | `ls`, `cat`, `cd` | Navigate the remote filesystem |
 | `lput`, `lget` | Transfer files |
 | `sysinfo`, `mounts`, `survey` | Enumerate the target |
+| `software` | List installed software from 32-bit and 64-bit uninstall keys |
+| `pshistory` | Read saved PSReadLine history for the current user, a path, or all standard profiles |
+| `tasktriage`, `view-task` | Review task actions and events, or inspect a named task |
 | `av`, `defender`, `vmcheck`, `securitytools` | Inspect security and virtualization indicators |
 | `creds`, `tokens`, `unattend` | Inspect credential and privilege configuration |
 | `loggrab`, `regrip` | Collect target artifacts |
 | `addtun`, `showtun`, `deltun` | Manage Windows portproxy entries |
+
+Use `ls -depth 2 [path]` to include two levels of subdirectories (PowerShell 5.0+
+on the target). `pshistory` reads the current account's saved history;
+`pshistory -all` checks saved histories in standard profile locations.
+`Get-History` applies only to the current PowerShell process,
+so it cannot recover a prior interactive session through a new WMI process.
 
 Collected files and saved surveys are written to `.wmiexec2-artifacts/`, which
 is ignored by Git.

@@ -3,7 +3,8 @@ from modules.command_registry import command_named, commands
 EXPECTED_COMMANDS = {
     "addtun", "av", "cat", "cd", "creds", "defender", "deltun", "lcd", "lget",
     "loggrab", "lpwd", "lput", "ls", "mounts", "regrip", "securitytools", "showtun",
-    "survey", "sysinfo", "tokens", "unattend", "vmcheck",
+    "survey", "sysinfo", "tokens", "unattend", "vmcheck", "software",
+    "pshistory", "tasktriage", "view-task",
 }
 
 
