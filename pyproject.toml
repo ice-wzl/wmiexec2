@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "impacket>=0.11,<0.12",
+    # Impacket 0.11 imports pkg_resources, removed in setuptools 82.
+    "setuptools>=68,<82",
     "termcolor>=2.3,<3",
 ]
 
