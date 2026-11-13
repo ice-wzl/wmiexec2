@@ -58,8 +58,15 @@ so it cannot recover a prior interactive session through a new WMI process.
 `defender` displays each status, registry, log, and event query as it runs,
 including cloud-delivered protection preferences and the latest 60 Defender events.
 
-Collected files and saved surveys are written to `.wmiexec2-artifacts/`, which
-is ignored by Git.
+`lget` mirrors the remote path under `collect/<hostname>/`. For example,
+`lget C:\Windows\System32\drivers\etc\hosts` writes to
+`collect/<hostname>/windows/system32/drivers/etc/hosts`. Other drives are
+stored under `collect/<hostname>/drives/<letter>/`. Files collected by
+`loggrab` and `regrip`, and saved surveys, remain in `.wmiexec2-artifacts/`.
+Both directories are ignored by Git.
+
+`lput <local-file>` and `lput <local-file> .` both upload to the current remote
+directory using the local filename. Pass a full remote filename to rename it.
 
 ## Architecture
 

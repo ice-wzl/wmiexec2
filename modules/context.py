@@ -3,8 +3,11 @@
 import logging
 import ntpath
 import os
+import re
 from pathlib import Path
 from typing import Optional
+
+from modules.collection_paths import mirrored_path
 
 
 class CommandUsageError(ValueError):
@@ -14,9 +17,12 @@ class CommandUsageError(ValueError):
 class CommandContext:
     """Adapter that keeps command modules independent of the interactive shell."""
 
-    def __init__(self, session, artifact_directory: Optional[Path] = None):
+    def __init__(self, session, artifact_directory: Optional[Path] = None,
+                 collection_directory: Optional[Path] = None):
         self._session = session
         self.artifact_directory = artifact_directory or Path.cwd() / ".wmiexec2-artifacts"
+        self.collection_directory = collection_directory or Path.cwd() / "collect"
+        self._hostname = None
 
     @property
     def cwd(self) -> str:
@@ -47,10 +53,14 @@ class CommandContext:
     def download(self, remote_path: str, local_path: Optional[Path] = None) -> Path:
         remote_abs = self._absolute_remote_path(remote_path)
         drive, tail = ntpath.splitdrive(remote_abs)
-        if not drive:
-            raise CommandUsageError(f"remote path has no drive: {remote_path}")
+        if not re.fullmatch(r"[A-Za-z]:", drive):
+            raise CommandUsageError(f"remote path must have a drive letter: {remote_path}")
 
-        destination = Path(local_path) if local_path else Path(ntpath.basename(remote_abs))
+        destination = (
+            Path(local_path) if local_path is not None
+            else mirrored_path(self.collection_directory, self._remote_hostname(), remote_abs)
+        )
+        destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_name(destination.name + ".part")
         share = drive[:-1] + "$"
         path_in_share = tail if tail.startswith("\\") else "\\" + tail
@@ -63,6 +73,14 @@ class CommandContext:
             temporary.unlink(missing_ok=True)
             raise
         return destination.resolve()
+
+    def _remote_hostname(self) -> str:
+        if self._hostname is None:
+            output = self.run("hostname", shell_type="cmd")
+            self._hostname = next((line.strip() for line in output.splitlines() if line.strip()), "")
+            if not self._hostname:
+                raise RuntimeError("could not determine the remote hostname for downloads")
+        return self._hostname
 
     def upload(self, local_path: str, remote_path: str = "") -> str:
         source = Path(local_path)
@@ -84,7 +102,7 @@ class CommandContext:
             )
         else:
             base = ntpath.join(self.cwd, destination)
-            if not destination or destination.endswith("\\"):
+            if destination in ("", ".") or destination.endswith("\\"):
                 base = ntpath.join(base, source.name)
             remote_abs = ntpath.normpath(base)
 
