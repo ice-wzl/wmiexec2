@@ -42,13 +42,35 @@ Frequently used commands include:
 | `ls`, `cat`, `cd` | Navigate the remote filesystem |
 | `lput`, `lget` | Transfer files |
 | `sysinfo`, `mounts`, `survey` | Enumerate the target |
+| `software` | List installed software from 32-bit and 64-bit uninstall keys |
+| `pshistory` | Read saved PSReadLine history for the current user, a path, or all standard profiles |
+| `tasktriage`, `view-task` | Review task actions and events, or inspect a named task |
 | `av`, `defender`, `vmcheck`, `securitytools` | Inspect security and virtualization indicators |
 | `creds`, `tokens`, `unattend` | Inspect credential and privilege configuration |
 | `loggrab`, `regrip` | Collect target artifacts |
 | `addtun`, `showtun`, `deltun` | Manage Windows portproxy entries |
 
-Collected files and saved surveys are written to `.wmiexec2-artifacts/`, which
-is ignored by Git.
+Use `ls -depth 2 [path]` to include two levels of subdirectories (PowerShell 5.0+
+on the target). `pshistory` reads the current account's saved history;
+`pshistory -all` checks saved histories in standard profile locations.
+`Get-History` applies only to the current PowerShell process,
+so it cannot recover a prior interactive session through a new WMI process.
+`defender` displays each status, registry, log, and event query as it runs,
+including cloud-delivered protection preferences and the latest 60 Defender events.
+
+`lget` mirrors the remote path under `collect/<hostname>/`. For example,
+`lget C:\Windows\System32\drivers\etc\hosts` writes to
+`collect/<hostname>/windows/system32/drivers/etc/hosts`. Other drives are
+stored under `collect/<hostname>/drives/<letter>/`. Files collected by
+`loggrab` and `regrip`, and saved surveys, remain in `.wmiexec2-artifacts/`.
+Both directories are ignored by Git.
+
+`lput <local-file>` and `lput <local-file> .` both upload to the current remote
+directory using the local filename. Pass a full remote filename to rename it.
+
+On Linux, shell commands are also appended to `/tmp/<hostname>_commands.log`.
+When reconnecting to that host, previous commands are loaded for readline's
+up-arrow history.
 
 ## Architecture
 

@@ -60,45 +60,6 @@ def virtualization_check(context, arguments: str) -> None:
         print("[*] No VirtualBox files found")
 
 
-@command("defender", "Security", "Query Microsoft Defender configuration", "defender")
-def defender_configuration(context, arguments: str) -> None:
-    context.info("Defender install location")
-    context.write(context.run(
-        r'reg query "HKLM\Software\Microsoft\Windows Defender" /F InstallLocation '
-        r"| findstr /i InstallLocation"
-    ))
-
-    checks = (
-        (
-            "Defender service",
-            r'reg query "HKLM\Software\Microsoft\Windows Defender" /F IsServiceRunning',
-            {0: "not running", 1: "running"},
-        ),
-        (
-            "Real-time protection",
-            r'reg query "HKLM\Software\Microsoft\Windows Defender\Real-Time Protection" '
-            r"/F DisableRealtimeMonitoring",
-            {0: "enabled", 1: "disabled"},
-        ),
-        (
-            "Tamper protection",
-            r'reg query "HKLM\SOFTWARE\Microsoft\Windows Defender\Features" /v TamperProtection',
-            {0: "disabled", 4: "disabled (managed)", 5: "enabled"},
-        ),
-    )
-    for label, remote_command, states in checks:
-        value = reg_dword_value(context.run(remote_command))
-        context.info("%s: %s", label, states.get(value, f"unknown ({value!r})"))
-
-    for label, key in (
-        ("Process exclusions", r"HKLM\Software\Microsoft\Windows Defender\Exclusions\Processes"),
-        ("Path exclusions", r"HKLM\Software\Microsoft\Windows Defender\Exclusions\Paths"),
-    ):
-        context.info(label)
-        output = context.run(f'reg query "{key}"')
-        context.write(output if output.strip() else "\tNone")
-
-
 @command("tokens", "Privilege", "Show enabled privileges and relevant techniques", "tokens")
 def token_privileges(context, arguments: str) -> None:
     suggestions = {

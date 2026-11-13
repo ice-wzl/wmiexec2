@@ -5,6 +5,7 @@ import logging
 import os
 from functools import partial
 
+from modules.command_history import CommandHistory
 from modules.command_registry import command_named, commands
 from modules.context import CommandContext, CommandUsageError
 from remote_session import RemoteSession
@@ -14,8 +15,9 @@ class RemoteShell(cmd.Cmd):
     intro = "[*] **Launching wmiexec2**\n[*] Enter help for available commands"
 
     def __init__(self, share, win32Process, smbConnection, shell_type, silentCommand=False,
-                 codec=None, artifact_directory=None):
+                 codec=None, artifact_directory=None, history_directory=None):
         super().__init__()
+        self._history = None
         self._session = RemoteSession(
             share, win32Process, smbConnection, shell_type, silentCommand, codec
         )
@@ -25,7 +27,14 @@ class RemoteShell(cmd.Cmd):
 
         if smbConnection is not None:
             self._invoke_registered("cd", "\\")
+            self._history = CommandHistory(self._context.remote_hostname, history_directory)
+            print(f"[*] Command history: {self._history.path}")
         self._update_prompt()
+
+    def onecmd(self, line):
+        if self._history is not None:
+            self._history.append(line)
+        return super().onecmd(line)
 
     def _install_commands(self):
         for specification in commands():

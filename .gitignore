@@ -10,6 +10,7 @@ dist/
 .venv/
 venv/
 .wmiexec2-artifacts/
+collect/
 survey_*.txt
 SAM
 Security
