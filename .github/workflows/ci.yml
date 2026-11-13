@@ -6,13 +6,14 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Python 3.9 is available for 24.04, but not for the newer ubuntu-latest image.
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.11", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
