@@ -55,6 +55,8 @@ on the target). `pshistory` reads the current account's saved history;
 `pshistory -all` checks saved histories in standard profile locations.
 `Get-History` applies only to the current PowerShell process,
 so it cannot recover a prior interactive session through a new WMI process.
+`defender` displays each status, registry, log, and event query as it runs,
+including cloud-delivered protection preferences and the latest 60 Defender events.
 
 Collected files and saved surveys are written to `.wmiexec2-artifacts/`, which
 is ignored by Git.
