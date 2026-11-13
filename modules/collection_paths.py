@@ -5,11 +5,17 @@ import re
 from pathlib import Path
 
 
-def mirrored_path(root: Path, hostname: str, remote_path: str) -> Path:
-    """Return collect/<host>/<remote path>, omitting the C: drive prefix."""
+def normalize_hostname(hostname: str) -> str:
+    """Return a safe, consistent hostname for local filenames."""
     name = hostname.strip().rstrip(".").lower()
     if not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", name):
         raise ValueError(f"invalid remote hostname: {hostname!r}")
+    return name
+
+
+def mirrored_path(root: Path, hostname: str, remote_path: str) -> Path:
+    """Return collect/<host>/<remote path>, omitting the C: drive prefix."""
+    name = normalize_hostname(hostname)
 
     drive, tail = ntpath.splitdrive(ntpath.normpath(remote_path))
     if not re.fullmatch(r"[a-zA-Z]:", drive) or not tail.startswith("\\"):

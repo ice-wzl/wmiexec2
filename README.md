@@ -68,6 +68,10 @@ Both directories are ignored by Git.
 `lput <local-file>` and `lput <local-file> .` both upload to the current remote
 directory using the local filename. Pass a full remote filename to rename it.
 
+On Linux, shell commands are also appended to `/tmp/<hostname>_commands.log`.
+When reconnecting to that host, previous commands are loaded for readline's
+up-arrow history.
+
 ## Architecture
 
 ```text

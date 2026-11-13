@@ -36,6 +36,10 @@ class CommandContext:
     def shell_type(self) -> str:
         return self._session.shell_type
 
+    @property
+    def remote_hostname(self) -> str:
+        return self._remote_hostname()
+
     def run(self, command: str, shell_type: Optional[str] = None) -> str:
         return self._session.execute(command, shell_type)
 
