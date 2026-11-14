@@ -2,7 +2,7 @@
 
 import pytest
 
-from modules.commands.filesystem import list_directory
+from modules.commands.filesystem import change_remote_directory, list_directory
 from modules.commands.history import powershell_history
 from modules.commands.software import installed_software
 from modules.commands.task_details import view_task
@@ -34,6 +34,22 @@ def test_ls_depth_uses_literal_path_and_powershell():
     assert shell_type == "powershell"
     assert "-Depth 2" in script
     assert "-LiteralPath 'C:\\Program Files\\O''Brien'" in script
+
+
+def test_cd_uses_cmd_syntax_even_in_a_powershell_session():
+    class CwdContext(Context):
+        cwd = r"C:\Users\Administrator"
+        shell_type = "powershell"
+
+        def run(self, script, shell_type=None):
+            self.calls.append((script, shell_type))
+            return "C:\\\r\n" if script == "cd " else ""
+
+    context = CwdContext()
+    change_remote_directory(context, "\\")
+
+    assert context.calls == [('cd /d "C:\\"', "cmd"), ("cd ", "cmd")]
+    assert context.cwd == "C:\\"
 
 
 @pytest.mark.parametrize("arguments", ["-depth", "-depth -1", "-depth x", "a b"])

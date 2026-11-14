@@ -68,12 +68,12 @@ def change_remote_directory(context, arguments: str) -> None:
         else:
             target = ntpath.normpath(ntpath.join(context.cwd, raw))
 
-    output = context.run(f'cd /d "{target}"')
+    output = context.run(f'cd /d "{target}"', shell_type="cmd")
     if output.strip():
         context.write(output)
         return
     context.cwd = target
-    confirmed = context.run("cd ").strip("\r\n")
+    confirmed = context.run("cd ", shell_type="cmd").strip("\r\n")
     if confirmed:
         context.cwd = confirmed
 
