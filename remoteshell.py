@@ -13,6 +13,7 @@ from remote_session import RemoteSession
 
 class RemoteShell(cmd.Cmd):
     intro = "[*] **Launching wmiexec2**\n[*] Enter help for available commands"
+    identchars = cmd.Cmd.identchars + "-"
 
     def __init__(self, share, win32Process, smbConnection, shell_type, silentCommand=False,
                  codec=None, artifact_directory=None, history_directory=None):
